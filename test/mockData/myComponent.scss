@@ -1,0 +1,29 @@
+@import 'app/scss/includes.scss';
+
+.SomeClass, .SomeOtherClass {}
+
+.someRandomClassName {
+    font-size: 24px;
+}
+
+#someRandomId {
+    font-size: 50px;
+}
+
+.selectorHasNestedRules {
+    font-size: 1px;
+    .nested-property {
+        font-size: 2px;
+        color: $hp-color;
+    }
+    .second-nested-property {}
+    &.wutwut {}
+    &:last-child {}
+    @include mixin-theme;
+}
+
+.random-content {}
+
+#randomIdDoesNotExistInHtml {
+    #nestedRandomIdDoesNotExist {}
+}
