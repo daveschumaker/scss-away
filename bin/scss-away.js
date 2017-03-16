@@ -11,7 +11,7 @@ let appStats = require('./utils/appStats.js');
 let folderPath = process.argv.slice(2); // Gets absolute path to directory to analyze
 const timestart = Date.now() / 1000;
 
-console.log('--=== SCSS Away v.0.2.0 ===--'.underline.yellow);
+console.log('--=== SCSS Away v.0.2.1 ===--'.underline.yellow);
 if (folderPath.length === 0) {
     console.log('Exiting: No absolute path to project folder provided.'.yellow);
     process.exit(0);

@@ -82,6 +82,8 @@ Contributions are much appreciated!
 
 ## Changelog
 
+* v0.2.1
+    * Fix wrongly named bin property in `package.json`
 * v0.2.0
     * Add ability to check html component for orphaned attributes not found in its corresponding scss file.
 * v0.1.0
