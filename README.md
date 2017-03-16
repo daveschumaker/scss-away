@@ -1,12 +1,22 @@
 # SCSS Away
 
-**SCSS Away** is a tool that analyzes `.js` or `.jsx` files within a folder (or series of subfolders) and searches for matching `.scss` files in the same folder. It then compares the rules in order to find abandoned / orphaned attributes that might be lingering inside your stylesheets.
+**SCSS Away** is a tool that analyzes `.js` or `.jsx` files within a folder (or series of subfolders) and searches for matching `.scss` files (by default, in the same folder but you can provide a flag for a different folder where `scss` files may be located).
+
+It then compares the rules in order to find abandoned / orphaned attributes that might be lingering inside your stylesheets as well as provide a warning when nested selectors are found ([you might ask, why?](http://thesassway.com/intermediate/avoid-nested-selectors-for-more-modular-css)).
+
+To install:
+
+```javascript
+npm install scss-away --save-dev
+```
 
 ## Overview
 
 We run a fairly robust web app created with React. There are hundreds and hundreds of components and associated stylesheets inside our project. Ideally, when we add, update, or remove code in a React component, we should be doing the same thing in corresponding stylesheets. Sometimes life gets in the way and we forget to do this for some reason or another. Over time, this adds up to a lot of code bloat that gets added to our project.
 
 This tool was created in order to quickly analyze a large project (containing hundreds of React components and corresponding stylesheets) in order to find orphaned CSS rules.
+
+Running this in our own React project took 0.54 seconds, found 405 files that matched `jsx` or `js`, matched 226 corresponding stylesheets and found errors in 115 stylesheets. (We used to nest our scss and we've started slowly moving away from that).
 
 ## How to start
 
@@ -17,12 +27,16 @@ npm install scss-away --save-dev
 Run the script from your project folder. Providing an absolute path to your project folder as an argument. (Tip, you can get the absolute path of your current project by typing `pwd` in your terminal).
 
 ```
-./node_modules/scss-away/bin/scss-away /user/dave/projects/example/
+scss-away --path /user/dave/example-project/src/
 ```
+
+(Depending on how Node is setup on your machine, you may have to invoke this script using `./node_modules/scss-away/bin/scss-away` )
 
 ## How to use
 
-As an example, this is the ideal sort of folder structure for matching `js` / `jsx` and `scss` files:
+By default, the running the script above will search for `scss` files inside `/user/dave/example-project/src/`.
+
+As an example, this is the ideal sort of default folder structure for matching `js` / `jsx` and `scss` files:
 
 ```
 projectFolder/
@@ -39,6 +53,30 @@ projectFolder/
     └── componentTwo.scss
 ```
 
+You can use an optional `--css` flag to point to a custom location where stylesheets may be stored.
+
+```
+scss-away --path /user/dave/example-project/src/ --css /user/dave/example-project/stylesheets/
+```
+
+This will look for stylesheets inside `/user/dave/example-project/stylesheets/`. The internal folder structure should match the internal folder structure for the components path. For example:
+
+```
+projectFolder/
+├── src/
+│   ├── componentOne.jsx
+│   ├── componentTwo.jsx
+│   └── childComponents/
+│       ├── childComponentOne.jsx
+│       └── childComponentTwo.jsx
+└── stylesheets/
+│   ├── componentOne.scss
+│   ├── componentTwo.scss
+│   └── childComponents/
+│       ├── childComponentOne.scss
+│       └── childComponentTwo.scss
+```
+
 When an `scss` file is found, the contents are parsed in order to create a list rules to match against.
 
 The `js` / `jsx` file is imported and any class names or ids are extracted and matched against the results from the `scss` file.
@@ -48,10 +86,54 @@ A list of orphaned rules that aren't found in the `jsx` component are returned i
 Example results:
 
 ```
-/users/dave/projects/example/App.scss
+/user/dave/example-project/src/App.scss
 [Error] Orphan Classes:
-  .App-Container
-  .App-Header
+    .App-Container
+    .App-Header
+
+/user/dave/example-project/src/Users.jsx
+[Error] Orphan Classes:
+    .user-name-bold
+[Error] Orphan Ids:
+    #user-id
+
+/user/dave/example-project/src/Users.scss
+[Error] Orphan Classes:
+    .user-email-address
+```
+
+## Exclude files, ids, or classes.
+
+You can tell `scss-away` to exclude certain file types, class names, or ids by creating a json file named `scss-away.exclude.js` in the root folder of your project (typically whereever your `package.json` file is located). Format the exclusion file like below:
+
+```
+{
+    "files": [
+        "/project/folder/src/AppTemplate.jsx",
+        "/project/folder/src/templates/UserPage.scss"
+    ],
+    "classes": [
+        "active",
+        "UserDashboardTemplate"
+    ],
+    "ids": [
+        "app-root"
+    ]
+}
+```
+
+## Options
+
+```
+--path   // Absolute path to project folder
+--css    // (Optional) Absolute path to stylesheets folder.
+--ext    // (Optional) Look for stylsheets matching this extension rather than defaulting to 'scss'
+```
+
+Example usage:
+
+```
+scss-away --path /project/src --css /project/css --ext css
 ```
 
 ## Tests
@@ -69,23 +151,26 @@ If you'd like to contribute to this project you can do so by following these rul
 3.  Add or update any tests related to changes you've made.
 4.  Send a pull request.
 
-Write a detailed comment and state your changes when creating the PR. Try to match existing code style and comments..
+Write a detailed comment and state your changes when creating the PR. Try to match existing code style and comments.
 
 Contributions are much appreciated!
 
 ## TODO / Wishlist
 
-* Add ability to provide optional folder where `css` or `scss` files may be located (i.e., if they're kept in a separate directory rather than in the same directory as the components).
-* Provide ability to load some sort of exclusion list so certain class names, ids or maybe even files can be ignored.
+* Ability to load some sort of exclusion list so certain class names (e.g., class names for icon fonts), ids or maybe even entire files can be ignored.
+* Create an MD5 hash of each rule so we can check if duplicate rulesets are being used in project.
+* More optional flags (e.g., ability to analyze `.html` files instead of just `.js` or `.jsx`.
+* Option to auto-delete orphaned rules (oh, dear God)?
 * More robust tests and examples, especially for `appUtils.js`.
-* Add ability to check other stylesheet filetypes (right now, it only looks for stylesheets with an extension of `scss`).
 
 ## Changelog
 
+* v0.3.0
+	* Add `--css` flag to look for stylesheets in a different location and ability to exclude certain files.
 * v0.2.1
-    * Fix wrongly named bin property in `package.json`
+	* Fix wrongly named bin property in `package.json`
 * v0.2.0
-    * Add ability to check html component for orphaned attributes not found in its corresponding scss file.
+	* Add ability to check html component for orphaned attributes not found in its corresponding scss file.
 * v0.1.0
 	* Initial release
 

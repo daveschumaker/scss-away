@@ -1,28 +1,113 @@
-var colors = require('colors');
-var fs = require('fs');
-var appStats = require('./appStats.js');
-var htmlUtils = require('./htmlUtils.js');
-var scssUtils = require('./scssUtils.js');
+const colors = require('colors');
+const fs = require('fs');
+const htmlUtils = require('./htmlUtils.js');
+const scssUtils = require('./scssUtils.js');
 
-var appUtils = {
-    getFileList(dir, filelist) {
+let config = {
+    exclusions: {
+        ids: [],
+        classes: [],
+        files: []
+    },
+    pathToComponents: null,
+    pathToStylesheets: null,
+    stylesheetExt: 'scss',
+    componentsFileList: {},     // Store list of components for quick lookups.
+    stylesheetsFileList: {},    // Store list of stylesheets for quick lookups.
+
+    scssFilesFound: 0,
+    jsFilesWithErrors: 0,
+    scssFilesWithErrors: 0,
+    totalErrors: 0
+}
+
+const appUtils = {
+    updateExlusions() {
+        let exclusions;
+
+        try {
+            let exclusionObj = JSON.parse(fs.readFileSync(process.cwd() + '/scss-away.exclude.js', 'utf8'));
+            config.exclusions.ids = exclusionObj.ids || [];
+            config.exclusions.classes = exclusionObj.classes || [];
+            config.exclusions.files = exclusionObj.files || [];
+        } catch(e) {
+            // console.log('Exclusion file error...', e);
+            return;
+        }
+    },
+    addToFileList(type, filePath) {
+        if (type === 'component') {
+            config.componentsFileList[filePath] = true;
+        } else {
+            config.stylesheetsFileList[filePath] = true;
+        }
+    },
+    getStats() {
+        return config;
+    },
+    updateStats(field) {
+        let num = config[field];
+        config[field]++;
+        return;
+    },
+    updateComponentPath(path) {
+        config.pathToComponents = appUtils.validatePath(path);
+        return path;
+    },
+    updateStyleSheetPath(path) {
+        config.pathToStylesheets = appUtils.validatePath(path);
+        return path;
+    },
+    updateStyleSheetExt(ext) {
+        config.stylesheetExt = ext;
+        return ext;
+    },
+    getConfig() {
+        return config;
+    },
+    validatePath(dir) {
+        if (!dir) {
+            return;
+        }
+
         // Handle instance where user forgets to provide a trailing slash on the folder name.
         let dirArray = dir.split('');
         if (dirArray[dirArray.length - 1] !== '/') {
             dirArray.push('/');
         }
-        dir = dirArray.join('');
-
-        var fs = fs || require('fs')
-        var files = fs.readdirSync(dir);
+        return(dirArray.join(''));
+    },
+    getFileList(type, dir, filelist) {
+        let files;
+        dir = appUtils.validatePath(dir);
+        try {
+            files = fs.readdirSync(dir);
+        } catch (err) {
+            if (err.code === 'ENOENT') {
+                console.log(`Error - Folder not found: ${dir}`.yellow);
+                console.log('Exiting.'.yellow);
+                process.exit(0);
+            } else {
+                console.log('An error occurred:', err);
+                return;
+            }
+        }
 
         filelist = filelist || [];
-        files.forEach(function(file) {
+        files.forEach((file) => {
             if (fs.statSync(dir + file).isDirectory()) {
-                filelist = appUtils.getFileList(dir + file + '/', filelist);
+                filelist = appUtils.getFileList(type, dir + file + '/', filelist);
             } else {
-                if (file.split('.')[1] === 'jsx' || file.split('.')[1] === 'js') {
-                    filelist.push(dir + file);
+                if (type === 'components') {
+                    if (file.split('.')[1] === 'jsx' || file.split('.')[1] === 'js') {
+                        appUtils.addToFileList('component', dir + file);
+                        filelist.push(dir + file);
+                    }
+                } else if (type === 'stylesheets') {
+                    if (file.split('.')[1] === config.stylesheetExt) {
+                        appUtils.addToFileList('stylesheet', dir + file);
+                        filelist.push(dir + file);
+                    }
                 }
             }
         });
@@ -38,15 +123,35 @@ var appUtils = {
             let scssSelectors = {};
             let scssPath;
 
-            return scssUtils.getScssFileName(filePath)
+            if (!filePath) {
+                return reject({
+                    Error: 'No path to file provided'
+                })
+            } else if (config.exclusions.files.indexOf(filePath) > -1) {
+                // Component is in exclusion list. Silently resolve issue.
+                return resolve(true);
+            }
+
+            return scssUtils.getScssFileName(filePath, config)
             .then((pathToScss) => {
+                if (!config.stylesheetsFileList[pathToScss]) {
+                    throw {
+                        Error: 'Error: SCSS file not found.'
+                    }
+                } else if (config.exclusions.files.indexOf(pathToScss) > -1) {
+                    throw {
+                        Error: 'Error: File in exclusion list.',
+                        file: pathToScss
+                    }
+                }
                 scssPath = pathToScss;
-                return scssUtils.loadCssAndGetData(filePath)
+                return scssUtils.loadCssAndGetData(scssPath, config)
             })
             .then((cssResults) => {
+                appUtils.updateStats('scssFilesFound');
                 scssSelectors = cssResults;
                 foundNestedRules = cssResults.foundNestedRules;
-                return htmlUtils.loadHtml(filePath);
+                return htmlUtils.loadHtml(filePath, config);
             }).then((htmlResults) => {
                 htmlAttribs = htmlResults;
                 return appUtils.checkClassNamesExist(scssSelectors, htmlAttribs)
@@ -73,6 +178,9 @@ var appUtils = {
                 if (err.Error === 'Error: SCSS file not found.') {
                     // Probably hide this error since a number of components may not have associated scss files.
                     // console.log('[OK] SCSS file not found'.yellow);
+                } else if (err.Error = 'Error: File in exclusion list.') {
+                    // Component is in exclusion list. Silently resolve issue.
+                    return resolve(true);
                 } else if (err.Error === 'CSS file contains no content') {
                     console.log(`\n${scssPath}`.yellow);
                     console.log(`[Warning] No content in scss file`.yellow);
@@ -191,9 +299,9 @@ var appUtils = {
         }
 
         if (rulesObj.type === 'css' && (foundNestedRules || missingClasses.length > 0 || missingIds.length > 0)) {
-            appStats.updateStats('scssFilesWithErrors');
+            appUtils.updateStats('scssFilesWithErrors');
         } else if (rulesObj.type === 'html' && (missingClasses.length > 0 || missingIds.length > 0)) {
-            appStats.updateStats('jsFilesWithErrors');
+            appUtils.updateStats('jsFilesWithErrors');
         }
 
         if (rulesObj.type === 'css' && foundNestedRules) {

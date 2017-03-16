@@ -1,79 +1,94 @@
-var fs = require('fs');
+const fs = require('fs');
 
-var htmlUtils = {
-    extractClassNames(input) {
+const htmlUtils = {
+    extractClassNames(input, appConfig) {
         return new Promise((resolve, reject) => {
             let foundClasses = [];
 
             // In React components, we often use the 'classnames' module to build an object with multiple
             // class names depending on certain criteria. We import this module as 'cx'. This loop looks
             // for the existence of 'cx({ ... })'
-            var regExForCx = /cx\(([\s\S]*?)\)/g;
-            var cxMatch;
+            let regExForCx = /cx\(([\s\S]*?)\)/g;
+            let cxMatch;
             do {
                 cxMatch = regExForCx.exec(input);
                 if (cxMatch) {
-                    var cleanCx = cxMatch[0].replace(/cx\(\{/i, '');
+                    let cleanCx = cxMatch[0].replace(/cx\(\{/i, '');
                     cleanCx = cleanCx.replace(/\}\)/i, '');
-                    var cxProps = cleanCx.split(',');
+                    let cxProps = cleanCx.split(',');
 
                     cxProps.forEach((prop) => {
-                        var cxClass = prop.trim();
-                        var getKey = cxClass.split(':')[0];
+                        let cxClass = prop.trim();
+                        let getKey = cxClass.split(':')[0];
                         getKey = getKey.replace(/\'/g, '');
-                        foundClasses.push(getKey);
+                        // check for rule exclusions
+                        if (appConfig.exclusions.classes.indexOf(getKey) === -1) {
+                            foundClasses.push(getKey);
+                        }
                     })
                 }
             } while (cxMatch);
 
             // This looks for 'className=" ... "' found in React components.
-            var regExForClassNames = /className="(.*?)"/g;
-            var classNameMatch;
+            let regExForClassNames = /className="(.*?)"/g;
+            let classNameMatch;
             do {
                 classNameMatch = regExForClassNames.exec(input);
                 if (classNameMatch) {
-                    var cleanClasses = classNameMatch[0].replace(/className=/i, '');
+                    let cleanClasses = classNameMatch[0].replace(/className=/i, '');
                     cleanClasses = cleanClasses.replace(/"/g, '');
                     cleanClasses = cleanClasses.split(' ');
-                    foundClasses = foundClasses.concat(cleanClasses)
+                    cleanClasses.forEach((className) => {
+                        // check for rule exclusions
+                        if (appConfig.exclusions.classes.indexOf(className) === -1) {
+                            foundClasses.push(className);
+                        }
+                    });
                 }
             } while (classNameMatch);
 
             // This looks for 'class=" ... "' found in normal HTML documents components.
-            var regExForClasses = /class="(.*?)"/g;
-            var classesMatch;
+            let regExForClasses = /class="(.*?)"/g;
+            let classesMatch;
             do {
                 classesMatch = regExForClasses.exec(input);
                 if (classesMatch) {
-                    var cleanClasses = classesMatch[0].replace(/class=/i, '');
+                    let cleanClasses = classesMatch[0].replace(/class=/i, '');
                     cleanClasses = cleanClasses.replace(/"/g, '');
                     cleanClasses = cleanClasses.split(' ');
-                    foundClasses = foundClasses.concat(cleanClasses)
+                    cleanClasses.forEach((className) => {
+                        // check for rule exclusions
+                        if (appConfig.exclusions.classes.indexOf(className) === -1) {
+                            foundClasses.push(className);
+                        }
+                    });
                 }
             } while (classesMatch);
 
             resolve(foundClasses);
         })
     },
-    extractIds(input) {
+    extractIds(input, appConfig) {
         return new Promise((resolve, reject) => {
             let foundIds = [];
 
-            var redExForIds = /id="(.*?)"/g;
-            var idMatch;
+            let redExForIds = /id="(.*?)"/g;
+            let idMatch;
             do {
                 idMatch = redExForIds.exec(input);
                 if (idMatch) {
-                    var cleanId = idMatch[0].replace(/id=/i, '');
+                    let cleanId = idMatch[0].replace(/id=/i, '');
                     cleanId = cleanId.replace(/"/g, '');
-                    foundIds.push(cleanId)
+                    if (appConfig.exclusions.ids.indexOf(cleanId) === -1) {
+                        foundIds.push(cleanId);
+                    }
                 }
             } while (idMatch);
 
             resolve(foundIds);
         })
     },
-    loadHtml(filePath) {
+    loadHtml(filePath, appConfig) {
         return new Promise((resolve, reject) => {
             let foundClasses = [];
             let foundIds = [];
@@ -84,7 +99,7 @@ var htmlUtils = {
                 })
             }
 
-            return fs.readFile(filePath, 'utf8', function(err, data) {
+            return fs.readFile(filePath, 'utf8', (err, data) => {
                 if (err) {
                     if (err.code === 'ENOENT') {
                         return reject({
@@ -96,10 +111,10 @@ var htmlUtils = {
                     }
                 }
 
-                htmlUtils.extractClassNames(data)
+                htmlUtils.extractClassNames(data, appConfig)
                 .then((extractedClassNames) => {
                     foundClasses = extractedClassNames;
-                    return htmlUtils.extractIds(data)
+                    return htmlUtils.extractIds(data, appConfig)
                 })
                 .then((extractedIds) => {
                     foundIds = extractedIds;
