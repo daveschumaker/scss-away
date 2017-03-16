@@ -1,18 +1,39 @@
 # SCSS Away
 
-**SCSSAway** is a tool that analyzes `.jsx` files within a folder (or series of subfolders) and searches for matching `.scss` files in the same folder.
+**SCSS Away** is a tool that analyzes `.js` or `.jsx` files within a folder (or series of subfolders) and searches for matching `.scss` files in the same folder. It then compares the rules in order to find abandoned / orphaned attributes that might be lingering inside your stylesheets.
+
+## Overview
+
+We run a fairly robust web app created with React. There are hundreds and hundreds of components and associated stylesheets inside our project. Ideally, when we add, update, or remove code in a React component, we should be doing the same thing in corresponding stylesheets. Sometimes life gets in the way and we forget to do this for some reason or another. Over time, this adds up to a lot of code bloat that gets added to our project.
 
 This tool was created in order to quickly analyze a large project (containing hundreds of React components and corresponding stylesheets) in order to find orphaned CSS rules.
 
-As an example, this is the ideal sort of folder structure for matching `jsx` and `scss` files:
+## How to start
+
+```javascript
+npm install scss-away --save-dev
+```
+
+Run the script from your project folder. Providing an absolute path to your project folder as an argument. (Tip, you can get the absolute path of your current project by typing `pwd` in your terminal).
 
 ```
-rootFolder/
+./node_modules/scss-away/bin/scss-away /user/dave/projects/example/
+```
+
+## How to use
+
+As an example, this is the ideal sort of folder structure for matching `js` / `jsx` and `scss` files:
+
+```
+projectFolder/
 ├── componentOne/
 │   ├── componentOne.jsx
 │   ├── componentOne.scss
 │   ├── childComponentOne.jsx
-│   └── childComponentOne.scss
+│   ├── childComponentOne.scss
+│   └── anotherFolder/
+│       ├── anotherComponent.jsx
+│       └── anotherComponent.scss
 └── ComponentTwo/
     ├── componentTwo.jsx
     └── componentTwo.scss
@@ -20,7 +41,7 @@ rootFolder/
 
 When an `scss` file is found, the contents are parsed in order to create a list rules to match against.
 
-The `jsx` file is imported and any class names or ids are extracted and matched against the results from the `scss` file.
+The `js` / `jsx` file is imported and any class names or ids are extracted and matched against the results from the `scss` file.
 
 A list of orphaned rules that aren't found in the `jsx` component are returned in the terminal.
 
@@ -33,24 +54,11 @@ Example results:
   .App-Header
 ```
 
-## How to start
-
-```javascript
-$ npm install scss-away
-```
-
-Run the script by providing an absolute path to the project folder as an argument. (Tip, you can get the absolute path of your current project by typing `pwd` in your terminal).
-
-```
-$ ./node_modules/scss-away/bin/scss-away /user/dave/projects/example/
-```
-
 ## Tests
 
 ```
-$ npm test
+npm test
 ```
-
 
 ## Contribute
 
@@ -61,12 +69,21 @@ If you'd like to contribute to this project you can do so by following these rul
 3.  Add or update any tests related to changes you've made.
 4.  Send a pull request.
 
-Write a detailed comment and state your changes when creating the PR. Try to match the code style and comments to the current style.
+Write a detailed comment and state your changes when creating the PR. Try to match existing code style and comments..
 
-Contributions are appreciated!
+Contributions are much appreciated!
+
+## TODO / Wishlist
+
+* Add ability to provide optional folder where `css` or `scss` files may be located (i.e., if they're kept in a separate directory rather than in the same directory as the components).
+* Provide ability to load some sort of exclusion list so certain class names, ids or maybe even files can be ignored.
+* More robust tests and examples, especially for `appUtils.js`.
+* Add ability to check other stylesheet filetypes (right now, it only looks for stylesheets with an extension of `scss`).
 
 ## Changelog
 
+* v0.2.0
+    * Add ability to check html component for orphaned attributes not found in its corresponding scss file.
 * v0.1.0
 	* Initial release
 

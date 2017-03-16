@@ -1,5 +1,6 @@
 var stats = {
     scssFilesFound: 0,
+    jsFilesWithErrors: 0,
     scssFilesWithErrors: 0,
     totalErros: 0
 }

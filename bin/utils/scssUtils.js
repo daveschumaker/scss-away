@@ -158,53 +158,6 @@ var scssUtils = {
             pathStringToArray[pathStringToArray.length - 1] = 'scss';
             resolve(pathStringToArray.join('.'));
         })
-    },
-    checkClassNamesExist(cssObj, htmlObj) {
-        return new Promise((resolve, reject) => {
-            let missingClasses = [];
-
-            cssObj.foundClasses.forEach((cssClassName) => {
-                let classNameWasFound = false;
-                htmlObj.foundClasses.find((htmlClassName) => {
-                    if (htmlClassName === cssClassName) {
-                        classNameWasFound = true;
-                    }
-                })
-
-                if (!classNameWasFound) {
-                    missingClasses.push(cssClassName);
-                }
-            })
-
-            return resolve(missingClasses);
-        })
-    },
-    checkIdsExist(cssObj, htmlObj) {
-        return new Promise((resolve, reject) => {
-            let missingIds = [];
-
-            if (cssObj.foundIds.length === 0) {
-                return resolve({
-                    noIdsFound: true,
-                    missingIds
-                });
-            }
-
-            cssObj.foundIds.forEach((cssId) => {
-                let idWasFound = false;
-                htmlObj.foundIds.find((htmlId) => {
-                    if (htmlId === cssId) {
-                        idWasFound = true;
-                    }
-                })
-
-                if (!idWasFound) {
-                    missingIds.push(cssId);
-                }
-            })
-
-            return resolve(missingIds);
-        })
     }
 }
 

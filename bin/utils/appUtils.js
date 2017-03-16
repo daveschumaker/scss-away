@@ -21,7 +21,7 @@ var appUtils = {
             if (fs.statSync(dir + file).isDirectory()) {
                 filelist = appUtils.getFileList(dir + file + '/', filelist);
             } else {
-                if (file.split('.')[1] === 'jsx') {
+                if (file.split('.')[1] === 'jsx' || file.split('.')[1] === 'js') {
                     filelist.push(dir + file);
                 }
             }
@@ -29,12 +29,12 @@ var appUtils = {
 
         return filelist;
     },
-    analyzeFile(filePath) {
+    analyzeCss(filePath) {
         return new Promise((resolve, reject) => {
             let foundNestedRules = false;
             let htmlAttribs = {};
-            let missingClasses = [];
-            let missingIds = [];
+            let missingClasses = {};
+            let missingIds = {};
             let scssSelectors = {};
             let scssPath;
 
@@ -49,60 +49,24 @@ var appUtils = {
                 return htmlUtils.loadHtml(filePath);
             }).then((htmlResults) => {
                 htmlAttribs = htmlResults;
-                return scssUtils.checkClassNamesExist(scssSelectors, htmlAttribs, filePath)
-            }).then((classNames) => {
-                missingClasses = classNames;
-                return scssUtils.checkIdsExist(scssSelectors, htmlAttribs, filePath);
-            }).then((ids) => {
-                missingIds = ids.missingIds;
-
-                if (!missingIds) {
-                    missingIds = [];
-                }
-
-                if (!missingClasses) {
-                    missingClasses = [];
-                }
-
-                if ((missingClasses.length === 0 && missingIds.length === 0 && !foundNestedRules) ||
-                    (missingClasses.length === 0 && ids.noIdsFound && !foundNestedRules)
-                ) {
-                    // For now, hide output for optimized files.
-                    // console.log(`\n${scssPath}`.yellow);
-                    // console.log('[OK] All classes and ids found'.green);
-                    return resolve(true);
-                } else {
-                    console.log(`\n${scssPath}`.yellow);
-                }
-
-                if (foundNestedRules || missingClasses.lenght > 0 || missingIds.length > 0) {
-                    appStats.updateStats('scssFilesWithErrors');
-                }
-
-                if (foundNestedRules) {
-                    console.log('[Warning] Found nested SCSS.'.yellow);
-                }
-
-                if (missingClasses.length > 0) {
-                    console.log('[Error] Orphan Classes:'.red);
-                    missingClasses.forEach((className) => {
-                        console.log(`  .${className}`.red);
-                    });
-                } else {
-                    console.log('[OK] All classes found'.green);
-                }
-
-                if (missingIds && missingIds.length > 0) {
-                    console.log('Orphan Ids:'.red);
-                    missingIds.forEach((missingId) => {
-                        console.log(`  #${missingId}`.red);
-                    });
-                } else if (ids.noIdsFound) {
-                    // Hide output when no ids were found in the SCSS file.
-                } else {
-                    // TODO: Should make sure we don't show this unless we actually found Id's
-                    console.log('[OK] All ids found'.green);
-                }
+                return appUtils.checkClassNamesExist(scssSelectors, htmlAttribs)
+            }).then((verifyClassesObj) => {
+                missingClasses = verifyClassesObj;
+                return appUtils.checkIdsExist(scssSelectors, htmlAttribs);
+            }).then((verifyIdsObj) => {
+                missingIds = verifyIdsObj;
+                return appUtils.analyzeHtml({
+                    htmlAttribs,
+                    scssSelectors,
+                    filePath
+                })
+            }).then(() => {
+                appUtils.displayOutput({
+                    type: 'css',
+                    foundNestedRules,
+                    missingClasses,
+                    missingIds
+                }, scssPath);
 
                 return resolve(true);
             }).catch((err = {}) => {
@@ -118,6 +82,143 @@ var appUtils = {
                 return resolve(true);
             })
         })
+    },
+    analyzeHtml(contentToAnalyze) {
+        return new Promise((resolve, reject) => {
+            let htmlAttribs = contentToAnalyze.htmlAttribs;
+            let scssSelectors = contentToAnalyze.scssSelectors;
+            let missingClasses = {};
+            let missingIds = {};
+
+            return appUtils.checkClassNamesExist(htmlAttribs, scssSelectors)
+            .then((verifyClassesObj) => {
+                missingClasses = verifyClassesObj;
+                return appUtils.checkIdsExist(htmlAttribs, scssSelectors)
+            })
+            .then((verifyIdsObj) => {
+                missingIds = verifyIdsObj;
+
+                appUtils.displayOutput({
+                    type: 'html',
+                    missingClasses,
+                    missingIds
+                }, contentToAnalyze.filePath);
+
+                return resolve(true);
+            })
+            .catch((err) => {
+                console.log('Error in analyzeHtml', err);
+                return resolve(true);
+            })
+        })
+    },
+    checkClassNamesExist(masterObj, compareObj) {
+        return new Promise((resolve, reject) => {
+            let missingClasses = [];
+
+            if (masterObj.foundClasses.length === 0) {
+                return resolve({
+                    noClassesFound: true,
+                    classes: missingClasses
+                });
+            }
+
+            masterObj.foundClasses.forEach((cssClassName) => {
+                let classNameWasFound = false;
+                compareObj.foundClasses.find((htmlClassName) => {
+                    if (htmlClassName === cssClassName) {
+                        classNameWasFound = true;
+                    }
+                })
+
+                if (!classNameWasFound) {
+                    missingClasses.push(cssClassName);
+                }
+            })
+
+            return resolve({
+                noClassesFound: false,
+                classes: missingClasses
+            });
+        })
+    },
+    checkIdsExist(masterObj, compareObj) {
+        return new Promise((resolve, reject) => {
+            let missingIds = [];
+
+            if (masterObj.foundIds.length === 0) {
+                return resolve({
+                    noIdsFound: true,
+                    ids: missingIds
+                });
+            }
+
+            masterObj.foundIds.forEach((cssId) => {
+                let idWasFound = false;
+                compareObj.foundIds.find((htmlId) => {
+                    if (htmlId === cssId) {
+                        idWasFound = true;
+                    }
+                })
+
+                if (!idWasFound) {
+                    missingIds.push(cssId);
+                }
+            })
+
+            return resolve({
+                noIdsFound: false,
+                ids: missingIds
+            });
+        })
+    },
+    displayOutput(rulesObj, filePath) {
+        let foundNestedRules = rulesObj.type === 'css' ? rulesObj.foundNestedRules : false;
+        let noClassesFound = rulesObj.missingClasses.noClassesFound;
+        let noIdsFound = rulesObj.missingIds.noIdsFound;
+        let missingClasses = rulesObj.missingClasses.classes;
+        let missingIds = rulesObj.missingIds.ids;
+
+        if ((missingClasses.length === 0 && missingIds.length === 0 && !foundNestedRules) ||
+            (missingClasses.length === 0 && noIdsFound && !foundNestedRules)
+        ) {
+            // For now, hide output for optimized files.
+            // console.log(`\n${filePath}`.yellow);
+            // console.log('[OK] All classes and ids found'.green);
+            return;
+        } else {
+            console.log(`\n${filePath}`.yellow);
+        }
+
+        if (rulesObj.type === 'css' && (foundNestedRules || missingClasses.length > 0 || missingIds.length > 0)) {
+            appStats.updateStats('scssFilesWithErrors');
+        } else if (rulesObj.type === 'html' && (missingClasses.length > 0 || missingIds.length > 0)) {
+            appStats.updateStats('jsFilesWithErrors');
+        }
+
+        if (rulesObj.type === 'css' && foundNestedRules) {
+            console.log('[Warning] Found nested SCSS.'.yellow);
+        }
+
+        if (missingClasses.length > 0) {
+            console.log('[Error] Orphan Classes:'.red);
+            missingClasses.forEach((className) => {
+                console.log(`  .${className}`.red);
+            });
+        } else if (!noClassesFound) {
+            // Hide output when no classes were found in the HTML / SCSS file.
+            console.log('[OK] All classes found'.green);
+        }
+
+        if (missingIds && missingIds.length > 0) {
+            console.log('Orphan Ids:'.red);
+            missingIds.forEach((missingId) => {
+                console.log(`  #${missingId}`.red);
+            });
+        } else if (!noIdsFound) {
+            // Hide output when no ids were found in the HTML / SCSS file.
+            console.log('[OK] All ids found'.green);
+        }
     }
 };
 

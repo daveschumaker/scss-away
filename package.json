@@ -1,6 +1,6 @@
 {
     "name": "scss-away",
-    "version": "0.1.2",
+    "version": "0.2.0",
     "description": "A utility to examine a folder of React components, check corresponding scss files and show orphaned rules.",
     "main": "bin/scss-away.js",
     "scripts": {
@@ -16,10 +16,16 @@
         "css",
         "html"
     ],
-    "author": "Dave Schumaker (daves@hotpads.com)",
+    "bin": {
+        "sass-away": "./bin/scss-away.js"
+    },
+    "author": "Dave Schumaker <daves@hotpads.com>",
     "repository": {
         "type": "git",
         "url": "git@github.com:daveschumaker/scss-away.git"
+    },
+    "bugs": {
+        "url": "https://github.com/daveschumaker/scss-away/issues"
     },
     "license": "MIT",
     "dependencies": {

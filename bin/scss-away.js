@@ -11,7 +11,7 @@ let appStats = require('./utils/appStats.js');
 let folderPath = process.argv.slice(2); // Gets absolute path to directory to analyze
 const timestart = Date.now() / 1000;
 
-console.log('--=== SCSS Away v.0.1 ===--'.underline.yellow);
+console.log('--=== SCSS Away v.0.2.0 ===--'.underline.yellow);
 if (folderPath.length === 0) {
     console.log('Exiting: No absolute path to project folder provided.'.yellow);
     process.exit(0);
@@ -22,7 +22,7 @@ if (folderPath.length === 0) {
     let matchedScssFiles = 0;
 
     Promise.all(fileList.map((component) => {
-        return appUtils.analyzeFile(component)
+        return appUtils.analyzeCss(component)
         .then((result) => {
             matchedScssFiles++;
         })
@@ -34,6 +34,7 @@ if (folderPath.length === 0) {
         console.log(`Total components found in ${folderPath[0]}: ${totalFilesFound}`.yellow);
         console.log(`SCSS files matched: ${appStats.getStats().scssFilesFound}`.yellow);
         console.log(`SCSS files with errors: ${appStats.getStats().scssFilesWithErrors}`.yellow);
+        console.log(`JS files with errors: ${appStats.getStats().jsFilesWithErrors}`.yellow);
         process.exit(0);
     })
     .catch((err) => {
