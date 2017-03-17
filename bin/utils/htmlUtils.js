@@ -1,6 +1,6 @@
-let fs = require('fs');
+const fs = require('fs');
 
-let htmlUtils = {
+const htmlUtils = {
     extractClassNames(input) {
         return new Promise((resolve, reject) => {
             let foundClasses = [];

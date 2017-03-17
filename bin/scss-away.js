@@ -5,12 +5,12 @@
 require('babel-register')({
     presets: ['es2015', 'stage-0']
 });
-let colors = require('colors');
-let appUtils = require('./utils/appUtils.js');
-let parseArgs = require('minimist');
-let scriptArgs = parseArgs(process.argv.slice(2));
+const colors = require('colors');
+const appUtils = require('./utils/appUtils.js');
+const parseArgs = require('minimist');
+const scriptArgs = parseArgs(process.argv.slice(2));
 const timestart = Date.now() / 1000;
-let projectPath = appUtils.updateComponentPath(scriptArgs.path);   // Absolute path to project directory
+const projectPath = appUtils.updateComponentPath(scriptArgs.path);   // Absolute path to project directory
 let stylesheetPath;
 
 if (scriptArgs.css) {

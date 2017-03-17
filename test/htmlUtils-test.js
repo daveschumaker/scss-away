@@ -12,7 +12,7 @@ let html = `
 describe('htmlUtils', () => {
     describe('extractClassNames()', () => {
         it('should find all classes in component', () => {
-            htmlUtils.extractClassNames(html)
+            return htmlUtils.extractClassNames(html)
             .then((foundClasses) => {
                 assert.equal('someRandomClassName', foundClasses[0]);
                 assert.equal('anotherClass', foundClasses[1]);
@@ -24,7 +24,7 @@ describe('htmlUtils', () => {
 
     describe('extractIds()', () => {
         it('should find all ids in component', () => {
-            htmlUtils.extractIds(html)
+            return htmlUtils.extractIds(html)
             .then((foundIds) => {
                 assert.equal('someRandomId', foundIds[0]);
                 assert.equal(-1, foundIds.indexOf('this-id-does-not-exist'));
@@ -36,14 +36,14 @@ describe('htmlUtils', () => {
         it('should return error when file is not found', () => {
             let filePath = __dirname + '/mockData/fileDoesNotExist.js';
 
-            htmlUtils.loadHtml(filePath)
+            return htmlUtils.loadHtml(filePath)
             .catch((err) => {
                 assert.equal('Error: File not found', err.Error);
             })
         });
 
         it('should return error when file path is not provided', () => {
-            htmlUtils.loadHtml()
+            return htmlUtils.loadHtml()
             .catch((err) => {
                 assert.equal('Error: Provide an absolute path to a file.', err.Error);
             })
@@ -52,7 +52,7 @@ describe('htmlUtils', () => {
         it('should import contents of file and extract classes and ids', () => {
             let filePath = __dirname + '/mockData/myComponent.js';
 
-            htmlUtils.loadHtml(filePath)
+            return htmlUtils.loadHtml(filePath)
             .then((fileResults) => {
                 assert.equal('someRandomClassName', fileResults.foundClasses[0]);
                 assert.equal('anotherClass', fileResults.foundClasses[1]);

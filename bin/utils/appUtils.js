@@ -1,7 +1,7 @@
-let colors = require('colors');
-let fs = require('fs');
-let htmlUtils = require('./htmlUtils.js');
-let scssUtils = require('./scssUtils.js');
+const colors = require('colors');
+const fs = require('fs');
+const htmlUtils = require('./htmlUtils.js');
+const scssUtils = require('./scssUtils.js');
 
 let config = {
     pathToComponents: null,
@@ -16,7 +16,7 @@ let config = {
     totalErrors: 0
 }
 
-let appUtils = {
+const appUtils = {
     addToFileList(type, filePath) {
         if (type === 'component') {
             config.componentsFileList[filePath] = true;

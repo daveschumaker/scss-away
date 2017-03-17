@@ -1,15 +1,50 @@
-let colors = require('colors');
-let fs = require('fs');
-let thematic = require('sass-thematic');
+const colors = require('colors');
+const fs = require('fs');
+const thematic = require('sass-thematic');
 const util = require('util');
 
-let scssUtils = {
+const scssUtils = {
     getScssFileName(pathToComponent, appConfig) {
         return new Promise((resolve, reject) => {
             let newPathToStylesheet = pathToComponent.replace(appConfig.pathToComponents, appConfig.pathToStylesheets);
             let pathStringToArray = newPathToStylesheet.split('.');
             pathStringToArray[pathStringToArray.length - 1] = appConfig.stylesheetExt; // Handles if ext === 'css' or 'scss'
             resolve(pathStringToArray.join('.'));
+        })
+    },
+    loadCssFile(filePath, appConfig) {
+        return new Promise((resolve, reject) => {
+            if (!filePath) {
+                return reject({
+                    Error: 'No path to file provided'
+                })
+            }
+
+            return scssUtils.getScssFileName(filePath, appConfig)
+            .then((pathToScssFile) => {
+                if (!appConfig.stylesheetsFileList[pathToScssFile]) {
+                    return reject({
+                        Error: 'Error: SCSS file not found.'
+                    });
+                }
+                return fs.readFile(pathToScssFile, 'utf8', function(err, data) {
+                    if (err) {
+                        if (err.code === 'ENOENT') {
+                            return reject({
+                                Error: 'Error: SCSS file not found.'
+                            });
+                        } else {
+                            console.log(err);
+                            return reject(err);
+                        }
+                    }
+
+                    resolve(data);
+                })
+            })
+            .catch((err) => {
+                console.log('An error occurred', err);
+            })
         })
     },
     parseCss(input) {
@@ -108,41 +143,6 @@ let scssUtils = {
                 foundNestedRules,
                 foundIds,
                 foundClasses
-            })
-        })
-    },
-    loadCssFile(filePath, appConfig) {
-        return new Promise((resolve, reject) => {
-            if (!filePath) {
-                return reject({
-                    Error: 'No path to file provided'
-                })
-            }
-
-            return scssUtils.getScssFileName(filePath, appConfig)
-            .then((pathToScssFile) => {
-                if (!appConfig.stylesheetsFileList[pathToScssFile]) {
-                    return reject({
-                        Error: 'Error: SCSS file not found.'
-                    });
-                }
-                return fs.readFile(pathToScssFile, 'utf8', function(err, data) {
-                    if (err) {
-                        if (err.code === 'ENOENT') {
-                            return reject({
-                                Error: 'Error: SCSS file not found.'
-                            });
-                        } else {
-                            console.log(err);
-                            return reject(err);
-                        }
-                    }
-
-                    resolve(data);
-                })
-            })
-            .catch((err) => {
-                console.log('An error occurred', err);
             })
         })
     },
