@@ -9,8 +9,8 @@ const colors = require('colors');
 const appUtils = require('./utils/appUtils.js');
 const parseArgs = require('minimist');
 const scriptArgs = parseArgs(process.argv.slice(2));
-const timestart = Date.now() / 1000;
 const projectPath = appUtils.updateComponentPath(scriptArgs.path);   // Absolute path to project directory
+const timestart = Date.now() / 1000;
 let stylesheetPath;
 
 if (scriptArgs.css) {
@@ -22,6 +22,9 @@ if (scriptArgs.css) {
 if (scriptArgs.ext) {
     appUtils.updateStyleSheetExt(scriptArgs.ext);
 }
+
+// Check for exclusions file
+appUtils.updateExlusions();
 
 console.log('--=== SCSS Away v.0.3.0 ===--\n'.underline.yellow);
 if (!projectPath) {

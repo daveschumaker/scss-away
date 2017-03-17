@@ -4,6 +4,11 @@ const htmlUtils = require('./htmlUtils.js');
 const scssUtils = require('./scssUtils.js');
 
 let config = {
+    exclusions: {
+        ids: [],
+        classes: [],
+        files: []
+    },
     pathToComponents: null,
     pathToStylesheets: null,
     stylesheetExt: 'scss',
@@ -17,6 +22,22 @@ let config = {
 }
 
 const appUtils = {
+    updateExlusions() {
+        let exclusions;
+
+        try {
+            let exclusionObj = JSON.parse(fs.readFileSync(process.cwd() + '/scss-away.exclude.js', 'utf8'));
+            console.log('POOP!');
+            console.log(exclusionObj);
+
+            config.exclusions.ids = exclusionObj.ids || [];
+            config.exclusions.classes = exclusionObj.classes || [];
+            config.exclusions.files = exclusionObj.files || [];
+        } catch(e) {
+            // console.log('Exclusion file error...', e);
+            return;
+        }
+    },
     addToFileList(type, filePath) {
         if (type === 'component') {
             config.componentsFileList[filePath] = true;
@@ -109,6 +130,9 @@ const appUtils = {
                 return reject({
                     Error: 'No path to file provided'
                 })
+            } else if (config.exclusions.files.indexOf(filePath) > -1) {
+                // Component is in exclusion list. Silently resolve issue.
+                return resolve(true);
             }
 
             return scssUtils.getScssFileName(filePath, config)
@@ -116,6 +140,11 @@ const appUtils = {
                 if (!config.stylesheetsFileList[pathToScss]) {
                     throw {
                         Error: 'Error: SCSS file not found.'
+                    }
+                } else if (config.exclusions.files.indexOf(pathToScss) > -1) {
+                    throw {
+                        Error: 'Error: File in exclusion list.',
+                        file: pathToScss
                     }
                 }
                 scssPath = pathToScss;
@@ -125,7 +154,7 @@ const appUtils = {
                 appUtils.updateStats('scssFilesFound');
                 scssSelectors = cssResults;
                 foundNestedRules = cssResults.foundNestedRules;
-                return htmlUtils.loadHtml(filePath);
+                return htmlUtils.loadHtml(filePath, config);
             }).then((htmlResults) => {
                 htmlAttribs = htmlResults;
                 return appUtils.checkClassNamesExist(scssSelectors, htmlAttribs)
@@ -152,6 +181,9 @@ const appUtils = {
                 if (err.Error === 'Error: SCSS file not found.') {
                     // Probably hide this error since a number of components may not have associated scss files.
                     // console.log('[OK] SCSS file not found'.yellow);
+                } else if (err.Error = 'Error: File in exclusion list.') {
+                    // Component is in exclusion list. Silently resolve issue.
+                    return resolve(true);
                 } else if (err.Error === 'CSS file contains no content') {
                     console.log(`\n${scssPath}`.yellow);
                     console.log(`[Warning] No content in scss file`.yellow);

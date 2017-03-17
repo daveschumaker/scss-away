@@ -102,6 +102,26 @@ Example results:
     .user-email-address
 ```
 
+## Exclude files, ids, or classes.
+
+You can tell `scss-away` to exclude certain file types, class names, or ids by creating a json file named `scss-away.exclude.js` in the root folder of your project (typically whereever your `package.json` file is located). Format the exclusion file like below:
+
+```
+{
+    "files": [
+        "/project/folder/src/AppTemplate.jsx",
+        "/project/folder/src/templates/UserPage.scss"
+    ],
+    "classes": [
+        "active",
+        "UserDashboardTemplate"
+    ],
+    "ids": [
+        "app-root"
+    ]
+}
+```
+
 ## Options
 
 ```
@@ -146,7 +166,7 @@ Contributions are much appreciated!
 ## Changelog
 
 * v0.3.0
-	* Add `--css` flag to look for stylesheets in a different location.
+	* Add `--css` flag to look for stylesheets in a different location and ability to exclude certain files.
 * v0.2.1
 	* Fix wrongly named bin property in `package.json`
 * v0.2.0

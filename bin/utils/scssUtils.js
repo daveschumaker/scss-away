@@ -27,7 +27,7 @@ const scssUtils = {
                         Error: 'Error: SCSS file not found.'
                     });
                 }
-                return fs.readFile(pathToScssFile, 'utf8', function(err, data) {
+                return fs.readFile(pathToScssFile, 'utf8', (err, data) => {
                     if (err) {
                         if (err.code === 'ENOENT') {
                             return reject({
@@ -81,7 +81,7 @@ const scssUtils = {
             resolve(cssNodes);
         })
     },
-    extractCssRules(rulesObj) {
+    extractCssRules(rulesObj, appConfig) {
         return new Promise((resolve, reject) => {
             let foundClasses = [];
             let foundIds = [];
@@ -89,7 +89,7 @@ const scssUtils = {
             let foundNestedRules = false; // On initial load, make sure we always reset the foundNestedRules variable.
             let foundLines = {};    // line numbers that rules are found on, used for checking nesting.
 
-            let rulesIterator = function(rulesObj) {
+            let rulesIterator = (rulesObj) => {
                 if (!rulesObj) {
                     return;
                 }
@@ -98,6 +98,13 @@ const scssUtils = {
                     if (obj.type === 'class' || obj.type === 'id') {
                         let selector = obj.content[0].content;
                         let type = obj.type;
+
+                        // check exclusions rules.
+                        if (type === 'class' && appConfig.exclusions.classes.indexOf(selector) > -1) {
+                            return;
+                        } else if (type === 'id' && appConfig.exclusions.ids.indexOf(selector) > -1) {
+                            return;
+                        }
 
                         // Sets the initial column to track for determining whether a rule is nested.
                         if (!initNestedLevel) {
@@ -153,7 +160,7 @@ const scssUtils = {
                 return scssUtils.parseCss(loadedFile)
             })
             .then((parsedRulesObj) => {
-                return scssUtils.extractCssRules(parsedRulesObj)
+                return scssUtils.extractCssRules(parsedRulesObj, appConfig)
             })
             .then((extractedRules) => {
                 resolve(extractedRules)

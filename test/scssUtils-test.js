@@ -69,8 +69,7 @@ describe('scssUtils', () => {
         it('should find all classes and ids in scss file', () => {
             return scssUtils.parseCss(scssWithNoNesting)
             .then((parsedRulesObj) => {
-                // console.log(parsedRulesObj);
-                return scssUtils.extractCssRules(parsedRulesObj)
+                return scssUtils.extractCssRules(parsedRulesObj, appUtils.getConfig())
             })
             .then((extractedRules) => {
                 assert.equal(false, extractedRules.foundNestedRules);
@@ -91,7 +90,7 @@ describe('scssUtils', () => {
         it('should not find nested classes if none exist', () => {
             return scssUtils.parseCss(scssWithNoNesting)
             .then((parsedRulesObj) => {
-                return scssUtils.extractCssRules(parsedRulesObj)
+                return scssUtils.extractCssRules(parsedRulesObj, appUtils.getConfig())
             })
             .then((extractedRules) => {
                 assert.equal(false, extractedRules.foundNestedRules);
@@ -104,7 +103,7 @@ describe('scssUtils', () => {
         it('should find nested classes if they exist', () => {
             return scssUtils.parseCss(scssWithNestedRules)
             .then((parsedRulesObj) => {
-                return scssUtils.extractCssRules(parsedRulesObj)
+                return scssUtils.extractCssRules(parsedRulesObj, appUtils.getConfig())
             })
             .then((extractedRules) => {
                 assert.equal(true, extractedRules.foundNestedRules);

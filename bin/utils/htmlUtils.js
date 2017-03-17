@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 const htmlUtils = {
-    extractClassNames(input) {
+    extractClassNames(input, appConfig) {
         return new Promise((resolve, reject) => {
             let foundClasses = [];
 
@@ -21,7 +21,12 @@ const htmlUtils = {
                         let cxClass = prop.trim();
                         let getKey = cxClass.split(':')[0];
                         getKey = getKey.replace(/\'/g, '');
-                        foundClasses.push(getKey);
+                        // check for rule exclusions
+                        if (appConfig.exclusions.classes.indexOf(getKey) === -1) {
+                            foundClasses.push(getKey);
+                        } else {
+                            console.log('found in html exclusions!!!');
+                        }
                     })
                 }
             } while (cxMatch);
@@ -35,7 +40,14 @@ const htmlUtils = {
                     let cleanClasses = classNameMatch[0].replace(/className=/i, '');
                     cleanClasses = cleanClasses.replace(/"/g, '');
                     cleanClasses = cleanClasses.split(' ');
-                    foundClasses = foundClasses.concat(cleanClasses)
+                    cleanClasses.forEach((className) => {
+                        // check for rule exclusions
+                        if (appConfig.exclusions.classes.indexOf(className) === -1) {
+                            foundClasses.push(className);
+                        } else {
+                            console.log('found in html exclusions!!!');
+                        }
+                    });
                 }
             } while (classNameMatch);
 
@@ -48,14 +60,21 @@ const htmlUtils = {
                     let cleanClasses = classesMatch[0].replace(/class=/i, '');
                     cleanClasses = cleanClasses.replace(/"/g, '');
                     cleanClasses = cleanClasses.split(' ');
-                    foundClasses = foundClasses.concat(cleanClasses)
+                    cleanClasses.forEach((className) => {
+                        // check for rule exclusions
+                        if (appConfig.exclusions.classes.indexOf(className) === -1) {
+                            foundClasses.push(className);
+                        } else {
+                            console.log('found in html exclusions!!!');
+                        }
+                    });
                 }
             } while (classesMatch);
 
             resolve(foundClasses);
         })
     },
-    extractIds(input) {
+    extractIds(input, appConfig) {
         return new Promise((resolve, reject) => {
             let foundIds = [];
 
@@ -66,14 +85,18 @@ const htmlUtils = {
                 if (idMatch) {
                     let cleanId = idMatch[0].replace(/id=/i, '');
                     cleanId = cleanId.replace(/"/g, '');
-                    foundIds.push(cleanId)
+                    if (appConfig.exclusions.ids.indexOf(cleanId) === -1) {
+                        foundIds.push(cleanId);
+                    } else {
+                        console.log('found in id exclusions!!!');
+                    }
                 }
             } while (idMatch);
 
             resolve(foundIds);
         })
     },
-    loadHtml(filePath) {
+    loadHtml(filePath, appConfig) {
         return new Promise((resolve, reject) => {
             let foundClasses = [];
             let foundIds = [];
@@ -84,7 +107,7 @@ const htmlUtils = {
                 })
             }
 
-            return fs.readFile(filePath, 'utf8', function(err, data) {
+            return fs.readFile(filePath, 'utf8', (err, data) => {
                 if (err) {
                     if (err.code === 'ENOENT') {
                         return reject({
@@ -96,10 +119,10 @@ const htmlUtils = {
                     }
                 }
 
-                htmlUtils.extractClassNames(data)
+                htmlUtils.extractClassNames(data, appConfig)
                 .then((extractedClassNames) => {
                     foundClasses = extractedClassNames;
-                    return htmlUtils.extractIds(data)
+                    return htmlUtils.extractIds(data, appConfig)
                 })
                 .then((extractedIds) => {
                     foundIds = extractedIds;
