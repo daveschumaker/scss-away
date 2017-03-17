@@ -6,6 +6,10 @@ let scssUtils = require('./scssUtils.js');
 let config = {
     pathToComponents: null,
     pathToStylesheets: null,
+    stylesheetExt: 'scss',
+    componentsFileList: {},     // Store list of components for quick lookups.
+    stylesheetsFileList: {},    // Store list of stylesheets for quick lookups.
+
     scssFilesFound: 0,
     jsFilesWithErrors: 0,
     scssFilesWithErrors: 0,
@@ -13,6 +17,13 @@ let config = {
 }
 
 let appUtils = {
+    addToFileList(type, filePath) {
+        if (type === 'component') {
+            config.componentsFileList[filePath] = true;
+        } else {
+            config.stylesheetsFileList[filePath] = true;
+        }
+    },
     getStats() {
         return config;
     },
@@ -29,6 +40,10 @@ let appUtils = {
         config.pathToStylesheets = appUtils.validatePath(path);
         return path;
     },
+    updateStyleSheetExt(ext) {
+        config.stylesheetExt = ext;
+        return ext;
+    },
     getConfig() {
         return config;
     },
@@ -44,14 +59,15 @@ let appUtils = {
         }
         return(dirArray.join(''));
     },
-    getFileList(dir, filelist) {
+    getFileList(type, dir, filelist) {
         let files;
         dir = appUtils.validatePath(dir);
         try {
             files = fs.readdirSync(dir);
         } catch (err) {
             if (err.code === 'ENOENT') {
-                console.log('Exiting: Folder not found.'.yellow);
+                console.log(`Error - Folder not found: ${dir}`.yellow);
+                console.log('Exiting.'.yellow);
                 process.exit(0);
             } else {
                 console.log('An error occurred:', err);
@@ -62,17 +78,25 @@ let appUtils = {
         filelist = filelist || [];
         files.forEach((file) => {
             if (fs.statSync(dir + file).isDirectory()) {
-                filelist = appUtils.getFileList(dir + file + '/', filelist);
+                filelist = appUtils.getFileList(type, dir + file + '/', filelist);
             } else {
-                if (file.split('.')[1] === 'jsx' || file.split('.')[1] === 'js') {
-                    filelist.push(dir + file);
+                if (type === 'components') {
+                    if (file.split('.')[1] === 'jsx' || file.split('.')[1] === 'js') {
+                        appUtils.addToFileList('component', dir + file);
+                        filelist.push(dir + file);
+                    }
+                } else if (type === 'stylesheets') {
+                    if (file.split('.')[1] === config.stylesheetExt) {
+                        appUtils.addToFileList('stylesheet', dir + file);
+                        filelist.push(dir + file);
+                    }
                 }
             }
         });
 
         return filelist;
     },
-    analyzeCss(filePath, cssFolderPath) {
+    analyzeCss(filePath) {
         return new Promise((resolve, reject) => {
             let foundNestedRules = false;
             let htmlAttribs = {};
@@ -81,10 +105,21 @@ let appUtils = {
             let scssSelectors = {};
             let scssPath;
 
-            return scssUtils.getScssFileName(filePath, cssFolderPath)
+            if (!filePath) {
+                return reject({
+                    Error: 'No path to file provided'
+                })
+            }
+
+            return scssUtils.getScssFileName(filePath, config)
             .then((pathToScss) => {
+                if (!config.stylesheetsFileList[pathToScss]) {
+                    throw {
+                        Error: 'Error: SCSS file not found.'
+                    }
+                }
                 scssPath = pathToScss;
-                return scssUtils.loadCssAndGetData(filePath)
+                return scssUtils.loadCssAndGetData(scssPath, config)
             })
             .then((cssResults) => {
                 appUtils.updateStats('scssFilesFound');

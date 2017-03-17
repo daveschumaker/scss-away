@@ -3,10 +3,18 @@ let fs = require('fs');
 let thematic = require('sass-thematic');
 const util = require('util');
 
-var scssUtils = {
+let scssUtils = {
+    getScssFileName(pathToComponent, appConfig) {
+        return new Promise((resolve, reject) => {
+            let newPathToStylesheet = pathToComponent.replace(appConfig.pathToComponents, appConfig.pathToStylesheets);
+            let pathStringToArray = newPathToStylesheet.split('.');
+            pathStringToArray[pathStringToArray.length - 1] = appConfig.stylesheetExt; // Handles if ext === 'css' or 'scss'
+            resolve(pathStringToArray.join('.'));
+        })
+    },
     parseCss(input) {
         return new Promise((resolve, reject) => {
-            var cssNodes = {};
+            let cssNodes = {};
 
             if (!input) {
                 return reject({
@@ -15,7 +23,7 @@ var scssUtils = {
             }
 
             // Remove '@import ...' statements in SCSS files:
-            var cleanCss = input.replace(/\@import.*$/gm, '');
+            let cleanCss = input.replace(/\@import.*$/gm, '');
 
             try {
                 if (cleanCss.length === 0) {
@@ -46,7 +54,7 @@ var scssUtils = {
             let foundNestedRules = false; // On initial load, make sure we always reset the foundNestedRules variable.
             let foundLines = {};    // line numbers that rules are found on, used for checking nesting.
 
-            var rulesIterator = function(rulesObj) {
+            let rulesIterator = function(rulesObj) {
                 if (!rulesObj) {
                     return;
                 }
@@ -103,7 +111,7 @@ var scssUtils = {
             })
         })
     },
-    loadCssFile(filePath) {
+    loadCssFile(filePath, appConfig) {
         return new Promise((resolve, reject) => {
             if (!filePath) {
                 return reject({
@@ -111,8 +119,13 @@ var scssUtils = {
                 })
             }
 
-            return scssUtils.getScssFileName(filePath)
+            return scssUtils.getScssFileName(filePath, appConfig)
             .then((pathToScssFile) => {
+                if (!appConfig.stylesheetsFileList[pathToScssFile]) {
+                    return reject({
+                        Error: 'Error: SCSS file not found.'
+                    });
+                }
                 return fs.readFile(pathToScssFile, 'utf8', function(err, data) {
                     if (err) {
                         if (err.code === 'ENOENT') {
@@ -133,9 +146,9 @@ var scssUtils = {
             })
         })
     },
-    loadCssAndGetData(filePath) {
+    loadCssAndGetData(filePath, appConfig) {
         return new Promise((resolve, reject) => {
-            scssUtils.loadCssFile(filePath)
+            scssUtils.loadCssFile(filePath, appConfig)
             .then((loadedFile) => {
                 return scssUtils.parseCss(loadedFile)
             })
@@ -148,23 +161,6 @@ var scssUtils = {
             .catch((err) => {
                 reject(err);
             })
-        })
-    },
-    getScssFileName(pathToComponent, cssFolderPath) {
-        return new Promise((resolve, reject) => {
-            let pathStringToArray = pathToComponent.split('.');
-            pathStringToArray[pathStringToArray.length - 1] = 'scss';
-            let updatedPathToScssFile = pathStringToArray.join('.');
-
-            if (cssFolderPath) {
-                let cssLocationArray = updatedPathToScssFile.split('/');
-                let cssFile = cssLocationArray[cssLocationArray.length - 1];
-                console.log('CHECKING:::', cssFolderPath + cssFile);
-                return resolve(cssFolderPath + cssFile);
-            } else {
-                return resolve(updatedPathToScssFile);
-
-            }
         })
     }
 }

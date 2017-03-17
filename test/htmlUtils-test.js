@@ -1,7 +1,7 @@
-var assert = require('assert');
-var htmlUtils = require('../bin/utils/htmlUtils.js');
+let assert = require('assert');
+let htmlUtils = require('../bin/utils/htmlUtils.js');
 
-var html = `
+let html = `
     <div className="someRandomClassName anotherClass" id="someRandomId">
         <h1 className="title-bar">
             THIS IS A FAKE TEST COMPONENT
@@ -34,7 +34,7 @@ describe('htmlUtils', () => {
 
     describe('loadHtml()', () => {
         it('should return error when file is not found', () => {
-            var filePath = __dirname + '/mockData/fileDoesNotExist.js';
+            let filePath = __dirname + '/mockData/fileDoesNotExist.js';
 
             htmlUtils.loadHtml(filePath)
             .catch((err) => {
@@ -50,7 +50,7 @@ describe('htmlUtils', () => {
         });
 
         it('should import contents of file and extract classes and ids', () => {
-            var filePath = __dirname + '/mockData/myComponent.js';
+            let filePath = __dirname + '/mockData/myComponent.js';
 
             htmlUtils.loadHtml(filePath)
             .then((fileResults) => {

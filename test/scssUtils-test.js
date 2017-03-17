@@ -1,7 +1,7 @@
-var assert = require('assert');
-var scssUtils = require('../bin/utils/scssUtils.js');
+let assert = require('assert');
+let scssUtils = require('../bin/utils/scssUtils.js');
 
-var scssWithNoNesting = `
+let scssWithNoNesting = `
     @import '_includes.scss';
 
     .SomeClass {
@@ -17,7 +17,7 @@ var scssWithNoNesting = `
     }
 `;
 
-var scssWithNestedRules = `
+let scssWithNestedRules = `
 .SomeClass {
     font-size: 42px;
 }
@@ -126,7 +126,7 @@ describe('scssUtils', () => {
 
     describe('loadCssFile()', () => {
         it('should load scss file', () => {
-            var filePath = __dirname + '/mockData/myComponent.js';
+            let filePath = __dirname + '/mockData/myComponent.js';
 
             scssUtils.loadCssFile(filePath)
             .then((result) => {
@@ -135,7 +135,7 @@ describe('scssUtils', () => {
         })
 
         it('should handle error when css file not found', () => {
-            var filePath = __dirname + '/mockData/myComponent-does-not-exist.js';
+            let filePath = __dirname + '/mockData/myComponent-does-not-exist.js';
 
             scssUtils.loadCssFile(filePath)
             .catch((err) => {
@@ -146,7 +146,7 @@ describe('scssUtils', () => {
 
     describe('loadCssAndGetData()', () => {
         it('should load all rules given path to html component', () => {
-            var filePath = __dirname + '/mockData/myComponent.js';
+            let filePath = __dirname + '/mockData/myComponent.js';
 
             scssUtils.loadCssAndGetData(filePath)
             .then((extractedRules) => {

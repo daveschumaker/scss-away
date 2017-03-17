@@ -1,6 +1,6 @@
-var React = require('react');
+let React = require('react');
 
-var MyComponent = React.createClass({
+let MyComponent = React.createClass({
     render() {
         return(
             <div className="someRandomClassName anotherClass" id="someRandomId">
