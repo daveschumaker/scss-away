@@ -1,7 +1,6 @@
-var appStats = require('./appStats.js');
-var colors = require('colors');
-var fs = require('fs');
-var thematic = require('sass-thematic');
+let colors = require('colors');
+let fs = require('fs');
+let thematic = require('sass-thematic');
 const util = require('util');
 
 var scssUtils = {
@@ -126,7 +125,6 @@ var scssUtils = {
                         }
                     }
 
-                    appStats.updateStats('scssFilesFound');
                     resolve(data);
                 })
             })
@@ -152,11 +150,21 @@ var scssUtils = {
             })
         })
     },
-    getScssFileName(pathToComponent) {
+    getScssFileName(pathToComponent, cssFolderPath) {
         return new Promise((resolve, reject) => {
             let pathStringToArray = pathToComponent.split('.');
             pathStringToArray[pathStringToArray.length - 1] = 'scss';
-            resolve(pathStringToArray.join('.'));
+            let updatedPathToScssFile = pathStringToArray.join('.');
+
+            if (cssFolderPath) {
+                let cssLocationArray = updatedPathToScssFile.split('/');
+                let cssFile = cssLocationArray[cssLocationArray.length - 1];
+                console.log('CHECKING:::', cssFolderPath + cssFile);
+                return resolve(cssFolderPath + cssFile);
+            } else {
+                return resolve(updatedPathToScssFile);
+
+            }
         })
     }
 }

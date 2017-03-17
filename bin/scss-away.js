@@ -7,17 +7,28 @@ require('babel-register')({
 });
 let colors = require('colors');
 let appUtils = require('./utils/appUtils.js');
-let appStats = require('./utils/appStats.js');
-let folderPath = process.argv.slice(2); // Gets absolute path to directory to analyze
+let parseArgs = require('minimist');
+let scriptArgs = parseArgs(process.argv.slice(2));
 const timestart = Date.now() / 1000;
 
-console.log('--=== SCSS Away v.0.3.0 ===--'.underline.yellow);
-if (folderPath.length === 0) {
-    console.log('Exiting: No absolute path to project folder provided.'.yellow);
+console.log(parseArgs(process.argv.slice(2)));
+let projectPath = appUtils.updateComponentPath(scriptArgs.path);   // Absolute path to project directory
+if (scriptArgs.css) {
+    appUtils.updateStyleSheetPath(scriptArgs.css);
+} else {
+    appUtils.updateStyleSheetPath(scriptArgs.path);
+}
+
+console.log(appUtils.getConfig());
+
+console.log('--=== SCSS Away v.0.3.0 ===--\n'.underline.yellow);
+if (!projectPath) {
+    console.log('Exiting: No valid path to project folder provided.'.yellow);
+    console.log('Use: --path /location/of/project/folder/'.yellow);
     process.exit(0);
 } else {
-    console.log(`Analyzing project folder: ${folderPath[0]}`.yellow);
-    let fileList = appUtils.getFileList(folderPath[0])
+    console.log(`Analyzing project folder: ${projectPath}`.yellow);
+    let fileList = appUtils.getFileList(projectPath)
     let totalFilesFound = fileList.length - 1;
     let matchedScssFiles = 0;
 
@@ -31,10 +42,10 @@ if (folderPath.length === 0) {
         const timeend = Date.now() / 1000;
         console.log('\nStatistics:'.yellow);
         console.log(`Process took ${(timeend - timestart).toFixed(2)} seconds.`.yellow);
-        console.log(`Total components found in ${folderPath[0]}: ${totalFilesFound}`.yellow);
-        console.log(`SCSS files matched: ${appStats.getStats().scssFilesFound}`.yellow);
-        console.log(`SCSS files with errors: ${appStats.getStats().scssFilesWithErrors}`.yellow);
-        console.log(`JS files with errors: ${appStats.getStats().jsFilesWithErrors}`.yellow);
+        console.log(`Total components found in ${projectPath}: ${totalFilesFound}`.yellow);
+        console.log(`SCSS files matched: ${appUtils.getStats().scssFilesFound}`.yellow);
+        console.log(`SCSS files with errors: ${appUtils.getStats().scssFilesWithErrors}`.yellow);
+        console.log(`JS files with errors: ${appUtils.getStats().jsFilesWithErrors}`.yellow);
         process.exit(0);
     })
     .catch((err) => {

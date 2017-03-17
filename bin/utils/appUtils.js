@@ -1,23 +1,66 @@
-var colors = require('colors');
-var fs = require('fs');
-var appStats = require('./appStats.js');
-var htmlUtils = require('./htmlUtils.js');
-var scssUtils = require('./scssUtils.js');
+let colors = require('colors');
+let fs = require('fs');
+let htmlUtils = require('./htmlUtils.js');
+let scssUtils = require('./scssUtils.js');
 
-var appUtils = {
-    getFileList(dir, filelist) {
+let config = {
+    pathToComponents: null,
+    pathToStylesheets: null,
+    scssFilesFound: 0,
+    jsFilesWithErrors: 0,
+    scssFilesWithErrors: 0,
+    totalErrors: 0
+}
+
+let appUtils = {
+    getStats() {
+        return config;
+    },
+    updateStats(field) {
+        let num = config[field];
+        config[field]++;
+        return;
+    },
+    updateComponentPath(path) {
+        config.pathToComponents = appUtils.validatePath(path);
+        return path;
+    },
+    updateStyleSheetPath(path) {
+        config.pathToStylesheets = appUtils.validatePath(path);
+        return path;
+    },
+    getConfig() {
+        return config;
+    },
+    validatePath(dir) {
+        if (!dir) {
+            return;
+        }
+
         // Handle instance where user forgets to provide a trailing slash on the folder name.
         let dirArray = dir.split('');
         if (dirArray[dirArray.length - 1] !== '/') {
             dirArray.push('/');
         }
-        dir = dirArray.join('');
-
-        var fs = fs || require('fs')
-        var files = fs.readdirSync(dir);
+        return(dirArray.join(''));
+    },
+    getFileList(dir, filelist) {
+        let files;
+        dir = appUtils.validatePath(dir);
+        try {
+            files = fs.readdirSync(dir);
+        } catch (err) {
+            if (err.code === 'ENOENT') {
+                console.log('Exiting: Folder not found.'.yellow);
+                process.exit(0);
+            } else {
+                console.log('An error occurred:', err);
+                return;
+            }
+        }
 
         filelist = filelist || [];
-        files.forEach(function(file) {
+        files.forEach((file) => {
             if (fs.statSync(dir + file).isDirectory()) {
                 filelist = appUtils.getFileList(dir + file + '/', filelist);
             } else {
@@ -29,7 +72,7 @@ var appUtils = {
 
         return filelist;
     },
-    analyzeCss(filePath) {
+    analyzeCss(filePath, cssFolderPath) {
         return new Promise((resolve, reject) => {
             let foundNestedRules = false;
             let htmlAttribs = {};
@@ -38,12 +81,13 @@ var appUtils = {
             let scssSelectors = {};
             let scssPath;
 
-            return scssUtils.getScssFileName(filePath)
+            return scssUtils.getScssFileName(filePath, cssFolderPath)
             .then((pathToScss) => {
                 scssPath = pathToScss;
                 return scssUtils.loadCssAndGetData(filePath)
             })
             .then((cssResults) => {
+                appUtils.updateStats('scssFilesFound');
                 scssSelectors = cssResults;
                 foundNestedRules = cssResults.foundNestedRules;
                 return htmlUtils.loadHtml(filePath);
@@ -191,9 +235,9 @@ var appUtils = {
         }
 
         if (rulesObj.type === 'css' && (foundNestedRules || missingClasses.length > 0 || missingIds.length > 0)) {
-            appStats.updateStats('scssFilesWithErrors');
+            appUtils.updateStats('scssFilesWithErrors');
         } else if (rulesObj.type === 'html' && (missingClasses.length > 0 || missingIds.length > 0)) {
-            appStats.updateStats('jsFilesWithErrors');
+            appUtils.updateStats('jsFilesWithErrors');
         }
 
         if (rulesObj.type === 'css' && foundNestedRules) {
