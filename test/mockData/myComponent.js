@@ -1,6 +1,6 @@
-let React = require('react');
+// Simulate a React component.
 
-let MyComponent = React.createClass({
+let MyComponent = {
     render() {
         return(
             <div className="someRandomClassName anotherClass" id="someRandomId">
@@ -13,6 +13,6 @@ let MyComponent = React.createClass({
             </div>
         )
     }
-})
+}
 
 module.exports = MyComponent;

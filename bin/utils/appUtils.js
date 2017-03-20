@@ -22,11 +22,17 @@ let config = {
 }
 
 const appUtils = {
-    updateExlusions() {
-        let exclusions;
+    updateExlusions(pathToExclusionsFile) {
+        let exlusionsFile;
+
+        if (pathToExclusionsFile) {
+            exlusionsFile = pathToExclusionsFile;
+        } else {
+            exclusionsFile = process.cwd() + '/scss-away.exclude.js';
+        }
 
         try {
-            let exclusionObj = JSON.parse(fs.readFileSync(process.cwd() + '/scss-away.exclude.js', 'utf8'));
+            let exclusionObj = JSON.parse(fs.readFileSync(exclusionsFile, 'utf8'));
             config.exclusions.ids = exclusionObj.ids || [];
             config.exclusions.classes = exclusionObj.classes || [];
             config.exclusions.files = exclusionObj.files || [];
@@ -34,6 +40,8 @@ const appUtils = {
             // console.log('Exclusion file error...', e);
             return;
         }
+
+        return config.exclusions;
     },
     addToFileList(type, filePath) {
         if (type === 'component') {

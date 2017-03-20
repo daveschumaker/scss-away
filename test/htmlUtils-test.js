@@ -1,5 +1,4 @@
 let assert = require('assert');
-const appUtils = require('../bin/utils/appUtils.js');
 let htmlUtils = require('../bin/utils/htmlUtils.js');
 
 let html = `
@@ -13,6 +12,8 @@ let html = `
 describe('htmlUtils', () => {
     describe('extractClassNames()', () => {
         it('should find all classes in component', () => {
+            const appUtils = require('../bin/utils/appUtils.js');
+
             return htmlUtils.extractClassNames(html, appUtils.getConfig())
             .then((foundClasses) => {
                 assert.equal('someRandomClassName', foundClasses[0]);
@@ -25,6 +26,8 @@ describe('htmlUtils', () => {
 
     describe('extractIds()', () => {
         it('should find all ids in component', () => {
+            const appUtils = require('../bin/utils/appUtils.js');
+
             return htmlUtils.extractIds(html, appUtils.getConfig())
             .then((foundIds) => {
                 assert.equal('someRandomId', foundIds[0]);
@@ -51,6 +54,7 @@ describe('htmlUtils', () => {
         });
 
         it('should import contents of file and extract classes and ids', () => {
+            const appUtils = require('../bin/utils/appUtils.js');
             let filePath = __dirname + '/mockData/myComponent.js';
 
             return htmlUtils.loadHtml(filePath, appUtils.getConfig())

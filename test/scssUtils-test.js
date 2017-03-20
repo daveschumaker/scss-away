@@ -1,5 +1,4 @@
 const assert = require('assert');
-const appUtils = require('../bin/utils/appUtils.js');
 const scssUtils = require('../bin/utils/scssUtils.js');
 
 const scssWithNoNesting = `
@@ -44,7 +43,7 @@ describe('scssUtils', () => {
         });
 
         it('should handle empty css', () => {
-            let scssWithOnlyImport = `
+            const scssWithOnlyImport = `
                 @import 'some_file.scss';
             `
 
@@ -67,6 +66,8 @@ describe('scssUtils', () => {
 
     describe('extractCssRules()', () => {
         it('should find all classes and ids in scss file', () => {
+            const appUtils = require('../bin/utils/appUtils.js');
+
             return scssUtils.parseCss(scssWithNoNesting)
             .then((parsedRulesObj) => {
                 return scssUtils.extractCssRules(parsedRulesObj, appUtils.getConfig())
@@ -88,6 +89,8 @@ describe('scssUtils', () => {
         });
 
         it('should not find nested classes if none exist', () => {
+            const appUtils = require('../bin/utils/appUtils.js');
+
             return scssUtils.parseCss(scssWithNoNesting)
             .then((parsedRulesObj) => {
                 return scssUtils.extractCssRules(parsedRulesObj, appUtils.getConfig())
@@ -101,6 +104,8 @@ describe('scssUtils', () => {
         });
 
         it('should find nested classes if they exist', () => {
+            const appUtils = require('../bin/utils/appUtils.js');
+
             return scssUtils.parseCss(scssWithNestedRules)
             .then((parsedRulesObj) => {
                 return scssUtils.extractCssRules(parsedRulesObj, appUtils.getConfig())
@@ -116,7 +121,9 @@ describe('scssUtils', () => {
 
     describe('getScssFileName()', () => {
         it('should automatically generate path to scss file', () => {
-            let pathToHmlComponent = '/path/to/project/component.js';
+            const appUtils = require('../bin/utils/appUtils.js');
+            const pathToHmlComponent = '/path/to/project/component.js';
+
             appUtils.updateComponentPath('/path/to/project/');
             appUtils.updateStyleSheetPath('/path/to/project/');
 
@@ -129,8 +136,10 @@ describe('scssUtils', () => {
 
     describe('loadCssFile()', () => {
         it('should load scss file', () => {
-            let filePath = __dirname + '/mockData/myComponent.js';
-            let stylesheetPath = __dirname + '/mockData/myComponent.scss';
+            const appUtils = require('../bin/utils/appUtils.js');
+            const filePath = __dirname + '/mockData/myComponent.js';
+            const stylesheetPath = __dirname + '/mockData/myComponent.scss';
+
             appUtils.addToFileList('component', filePath);
             appUtils.addToFileList('stylesheet', stylesheetPath);
             appUtils.updateComponentPath(__dirname + '/mockData/');
@@ -143,7 +152,8 @@ describe('scssUtils', () => {
         })
 
         it('should handle error when css file not found', () => {
-            let filePath = __dirname + '/mockData/myComponent-does-not-exist.js';
+            const appUtils = require('../bin/utils/appUtils.js');
+            const filePath = __dirname + '/mockData/myComponent-does-not-exist.js';
 
             return scssUtils.loadCssFile(filePath, appUtils.getConfig())
             .catch((err) => {
@@ -154,8 +164,10 @@ describe('scssUtils', () => {
 
     describe('loadCssAndGetData()', () => {
         it('should load all rules given path to html component', () => {
-            let filePath = __dirname + '/mockData/myComponent.js';
-            let stylesheetPath = __dirname + '/mockData/';
+            const appUtils = require('../bin/utils/appUtils.js');
+            const filePath = __dirname + '/mockData/myComponent.js';
+            const stylesheetPath = __dirname + '/mockData/';
+
             appUtils.addToFileList('component', filePath);
             appUtils.addToFileList('stylesheet', stylesheetPath + 'myComponent.scss');
             appUtils.updateComponentPath(__dirname + '/mockData/');
@@ -176,6 +188,25 @@ describe('scssUtils', () => {
             .catch((err) => {
                 console.log('An error occurred:', err);
             })
+        })
+
+        it('should find matching stylesheets in another folder', () => {
+            const appUtils = require('../bin/utils/appUtils.js');
+            const filePath = __dirname + '/mockData/myComponentTwo.js';
+            const stylesheetPath = __dirname + '/mockData/stylesheets/';
+
+            appUtils.addToFileList('component', filePath);
+            appUtils.addToFileList('stylesheet', stylesheetPath + 'myComponentTwo.scss');
+            appUtils.updateComponentPath(__dirname + '/mockData/');
+            appUtils.updateStyleSheetPath(__dirname + '/mockData/stylesheets');
+
+            return scssUtils.loadCssAndGetData(filePath, appUtils.getConfig())
+            .then((extractedRules) => {
+                assert.equal(true, extractedRules.foundNestedRules);
+                assert.equal(1, extractedRules.foundIds.length);
+                assert.equal(3, extractedRules.foundClasses.length);
+            })
+
         })
     })
 });
