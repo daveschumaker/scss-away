@@ -23,10 +23,10 @@ let config = {
 
 const appUtils = {
     updateExlusions(pathToExclusionsFile) {
-        let exlusionsFile;
+        let exclusionsFile;
 
         if (pathToExclusionsFile) {
-            exlusionsFile = pathToExclusionsFile;
+            exclusionsFile = pathToExclusionsFile;
         } else {
             exclusionsFile = process.cwd() + '/scss-away.exclude.js';
         }
@@ -56,19 +56,19 @@ const appUtils = {
     updateStats(field) {
         let num = config[field];
         config[field]++;
-        return;
+        return config[field];
     },
     updateComponentPath(path) {
         config.pathToComponents = appUtils.validatePath(path);
-        return path;
+        return config.pathToComponents;
     },
     updateStyleSheetPath(path) {
         config.pathToStylesheets = appUtils.validatePath(path);
-        return path;
+        return config.pathToStylesheets;
     },
     updateStyleSheetExt(ext) {
         config.stylesheetExt = ext;
-        return ext;
+        return config.stylesheetExt;
     },
     getConfig() {
         return config;

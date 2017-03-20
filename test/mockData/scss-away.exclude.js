@@ -1,5 +1,9 @@
 {
     "files": [],
-    "classes": [],
-    "ids": []
+    "classes": [
+        "myComponentTwo-content"
+    ],
+    "ids": [
+        "icon"
+    ]
 }
