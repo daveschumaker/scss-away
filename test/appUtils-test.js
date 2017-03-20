@@ -4,6 +4,7 @@ const isEqual = require('lodash.isequal');
 // Since we store a number of config variables inside appUtils,
 // this removes the module at the beginning of each test so we
 // can reset things.
+// TODO: Probably should improve how we handle storing these config options.
 var resetRequireCache = function() {
     delete require.cache[require.resolve('../bin/utils/appUtils.js')];
 }
@@ -193,10 +194,54 @@ describe('appUtils', () => {
         it('should add trailing slash to path if not provided', () => {
             resetRequireCache();
             const appUtils = require('../bin/utils/appUtils.js');
-            let testPath = 'path/to/component';
-            let matchPath = 'path/to/component/';
+            const testPath = 'path/to/component';
+            const matchPath = 'path/to/component/';
 
             assert.equal(matchPath, appUtils.validatePath(testPath));
+        });
+    });
+
+    describe('getFileList()', () => {
+        it('should get all components found in a path', () => {
+            resetRequireCache();
+            const appUtils = require('../bin/utils/appUtils.js');
+            const pathToComponents = __dirname + '/mockData/';
+            const file1 = pathToComponents + 'myComponent.js';
+            const file2 = pathToComponents + 'myComponentTwo.js';
+            const file3 = pathToComponents + 'componentDoesNotExist.js';
+
+            appUtils.updateComponentPath(pathToComponents);
+            const listOfFiles = appUtils.getFileList('components', appUtils.getConfig().pathToComponents);
+
+            assert.equal(2, listOfFiles.length);
+            assert.equal(file1, listOfFiles[0]);
+            assert.equal(file2, listOfFiles[1]);
+            assert.equal(-1, listOfFiles.indexOf(file3));
+
+            assert.equal(true, appUtils.getConfig().componentsFileList[file1]);
+            assert.equal(true, appUtils.getConfig().componentsFileList[file2]);
+            assert.equal(undefined, appUtils.getConfig().componentsFileList[file3]);
+        });
+
+        it('should get all stylesheets found in a path', () => {
+            resetRequireCache();
+            const appUtils = require('../bin/utils/appUtils.js');
+            const pathToStylesheets = __dirname + '/mockData/';
+            const scssFile1 = pathToStylesheets + 'myComponent.scss';
+            const scssFile2 = pathToStylesheets + 'stylesheets/myComponentTwo.scss';
+            const scssFile3 = pathToStylesheets + 'stylesheetsDoesNotExist.js';
+
+            appUtils.updateStyleSheetPath(pathToStylesheets);
+            const listOfFiles = appUtils.getFileList('stylesheets', appUtils.getConfig().pathToStylesheets);
+
+            assert.equal(2, listOfFiles.length);
+            assert.equal(scssFile1, listOfFiles[0]);
+            assert.equal(scssFile2, listOfFiles[1]);
+            assert.equal(-1, listOfFiles.indexOf(scssFile3));
+
+            assert.equal(true, appUtils.getConfig().stylesheetsFileList[scssFile1]);
+            assert.equal(true, appUtils.getConfig().stylesheetsFileList[scssFile2]);
+            assert.equal(undefined, appUtils.getConfig().stylesheetsFileList[scssFile3]);
         });
     });
 });

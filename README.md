@@ -70,11 +70,11 @@ projectFolder/
 │       ├── childComponentOne.jsx
 │       └── childComponentTwo.jsx
 └── stylesheets/
-│   ├── componentOne.scss
-│   ├── componentTwo.scss
-│   └── childComponents/
-│       ├── childComponentOne.scss
-│       └── childComponentTwo.scss
+    ├── componentOne.scss
+    ├── componentTwo.scss
+    └── childComponents/
+        ├── childComponentOne.scss
+        └── childComponentTwo.scss
 ```
 
 When an `scss` file is found, the contents are parsed in order to create a list rules to match against.
@@ -165,6 +165,8 @@ Contributions are much appreciated!
 
 ## Changelog
 
+* v0.3.2
+    * Update tests to cover more use cases.
 * v0.3.0
 	* Add `--css` flag to look for stylesheets in a different location and ability to exclude certain files.
 * v0.2.1
