@@ -41,11 +41,11 @@
     "colors": "1.1.2",
     "css": "2.2.1",
     "minimist": "1.2.0",
-    "node-sass": "4.5.0",
+    "node-sass": "4.5.1",
     "sass-thematic": "2.0.4"
   },
   "devDependencies": {
-    "istanbul": "^0.4.5",
+    "istanbul": "0.4.5",
     "lodash.isequal": "4.5.0",
     "mocha": "3.2.0"
   }
