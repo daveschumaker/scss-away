@@ -1,6 +1,10 @@
 const assert = require('assert');
 const scssUtils = require('../bin/utils/scssUtils.js');
 
+var resetRequireCache = function() {
+    delete require.cache[require.resolve('../bin/utils/appUtils.js')];
+}
+
 const scssWithNoNesting = `
     @import '_includes.scss';
 
@@ -42,10 +46,15 @@ describe('scssUtils', () => {
             })
         });
 
+        it('should handle css with no content', () => {
+            return scssUtils.parseCss()
+            .catch((err) => {
+                assert.equal('CSS file contains no content', err.Error);
+            })
+        });
+
         it('should handle empty css', () => {
-            const scssWithOnlyImport = `
-                @import 'some_file.scss';
-            `
+            const scssWithOnlyImport = `@import 'some_file.scss';`
 
             return scssUtils.parseCss(scssWithOnlyImport)
             .catch((err) => {
@@ -65,7 +74,15 @@ describe('scssUtils', () => {
     });
 
     describe('extractCssRules()', () => {
+        it('should handle error when no rules are provided', () => {
+            return scssUtils.extractCssRules()
+            .catch((err) => {
+                assert.equal(undefined, err);
+            })
+        });
+
         it('should find all classes and ids in scss file', () => {
+            resetRequireCache();
             const appUtils = require('../bin/utils/appUtils.js');
 
             return scssUtils.parseCss(scssWithNoNesting)
@@ -89,6 +106,7 @@ describe('scssUtils', () => {
         });
 
         it('should not find nested classes if none exist', () => {
+            resetRequireCache();
             const appUtils = require('../bin/utils/appUtils.js');
 
             return scssUtils.parseCss(scssWithNoNesting)
@@ -104,6 +122,7 @@ describe('scssUtils', () => {
         });
 
         it('should find nested classes if they exist', () => {
+            resetRequireCache();
             const appUtils = require('../bin/utils/appUtils.js');
 
             return scssUtils.parseCss(scssWithNestedRules)
@@ -121,6 +140,7 @@ describe('scssUtils', () => {
 
     describe('getScssFileName()', () => {
         it('should automatically generate path to scss file', () => {
+            resetRequireCache();
             const appUtils = require('../bin/utils/appUtils.js');
             const pathToHmlComponent = '/path/to/project/component.js';
 
@@ -136,6 +156,7 @@ describe('scssUtils', () => {
 
     describe('loadCssFile()', () => {
         it('should load scss file', () => {
+            resetRequireCache();
             const appUtils = require('../bin/utils/appUtils.js');
             const filePath = __dirname + '/mockData/myComponent.js';
             const stylesheetPath = __dirname + '/mockData/myComponent.scss';
@@ -151,7 +172,18 @@ describe('scssUtils', () => {
             })
         })
 
+        it('should handle error when css file not provided', () => {
+            resetRequireCache();
+            const appUtils = require('../bin/utils/appUtils.js');
+
+            return scssUtils.loadCssFile()
+            .catch((err) => {
+                assert.equal('No path to file provided', err.Error);
+            })
+        })
+
         it('should handle error when css file not found', () => {
+            resetRequireCache();
             const appUtils = require('../bin/utils/appUtils.js');
             const filePath = __dirname + '/mockData/myComponent-does-not-exist.js';
 
@@ -164,6 +196,7 @@ describe('scssUtils', () => {
 
     describe('loadCssAndGetData()', () => {
         it('should load all rules given path to html component', () => {
+            resetRequireCache();
             const appUtils = require('../bin/utils/appUtils.js');
             const filePath = __dirname + '/mockData/myComponent.js';
             const stylesheetPath = __dirname + '/mockData/';
@@ -191,6 +224,7 @@ describe('scssUtils', () => {
         })
 
         it('should find matching stylesheets in another folder', () => {
+            resetRequireCache();
             const appUtils = require('../bin/utils/appUtils.js');
             const filePath = __dirname + '/mockData/myComponentTwo.js';
             const stylesheetPath = __dirname + '/mockData/stylesheets/';

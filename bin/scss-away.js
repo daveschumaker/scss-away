@@ -26,7 +26,7 @@ if (scriptArgs.ext) {
 // Check for exclusions file
 appUtils.updateExlusions();
 
-console.log('--=== SCSS Away v.0.3.0 ===--\n'.underline.yellow);
+console.log('--=== SCSS Away v.0.3.2 ===--\n'.underline.yellow);
 if (!projectPath) {
     console.log('Exiting: No valid path to project folder provided.'.yellow);
     console.log('Use: --path /location/of/project/folder/'.yellow);
@@ -34,8 +34,20 @@ if (!projectPath) {
 } else {
     console.log(`Analyzing project folder: ${projectPath}`.yellow);
     let fileList = appUtils.getFileList('components', projectPath);
-    appUtils.getFileList('stylesheets', stylesheetPath);
+    let stylesheetList = appUtils.getFileList('stylesheets', stylesheetPath);
     let totalComponentsFound = fileList.length - 1;
+
+    if (fileList === 'Error - Folder not found:') {
+        console.log('Error - Folder not found:'.yellow);
+        console.log(`${projectPath}`.yellow);
+        console.log('Exiting.'.yellow);
+        process.exit(0);
+    } else if (stylesheetList === 'Error - Folder not found:') {
+        console.log('Error - Folder not found:'.yellow);
+        console.log(`${stylesheetPath}`.yellow);
+        console.log('Exiting.'.yellow);
+        process.exit(0);
+    }
 
     Promise.all(fileList.map((component) => {
         return appUtils.analyzeCss(component)

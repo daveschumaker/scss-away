@@ -116,10 +116,12 @@ describe('appUtils', () => {
                 componentsFileList: {},
                 stylesheetsFileList: {},
 
-                scssFilesFound: 0,
-                jsFilesWithErrors: 0,
-                scssFilesWithErrors: 0,
-                totalErrors: 0
+                stats: {
+                    scssFilesFound: 0,
+                    jsFilesWithErrors: 0,
+                    scssFilesWithErrors: 0,
+                    totalErrors: 0
+                }
             }
 
             assert.equal(true, isEqual(initConfig, appUtils.getConfig()));
@@ -140,10 +142,12 @@ describe('appUtils', () => {
                 componentsFileList: {},
                 stylesheetsFileList: {},
 
-                scssFilesFound: 0,
-                jsFilesWithErrors: 0,
-                scssFilesWithErrors: 0,
-                totalErrors: 0
+                stats: {
+                    scssFilesFound: 0,
+                    jsFilesWithErrors: 0,
+                    scssFilesWithErrors: 0,
+                    totalErrors: 0
+                }
             }
 
             const updatedConfig = {
@@ -158,10 +162,12 @@ describe('appUtils', () => {
                 componentsFileList: {},
                 stylesheetsFileList: {},
 
-                scssFilesFound: 0,
-                jsFilesWithErrors: 0,
-                scssFilesWithErrors: 0,
-                totalErrors: 0
+                stats: {
+                    scssFilesFound: 0,
+                    jsFilesWithErrors: 0,
+                    scssFilesWithErrors: 0,
+                    totalErrors: 0
+                }
             }
 
             const testPathToComponents = '/path/to/components/';
@@ -201,7 +207,48 @@ describe('appUtils', () => {
         });
     });
 
+    describe('getStats()', () => {
+        it('should return the stats object', () => {
+            resetRequireCache();
+            const appUtils = require('../bin/utils/appUtils.js');
+            const matchStats = {
+                scssFilesFound: 0,
+                jsFilesWithErrors: 0,
+                scssFilesWithErrors: 0,
+                totalErrors: 0
+            }
+
+            assert.equal(true, isEqual(appUtils.getStats(), matchStats));
+        });
+    });
+
+    describe('updateStats()', () => {
+        it('should update app stats and return correct values', () => {
+            resetRequireCache();
+            const appUtils = require('../bin/utils/appUtils.js');
+            const matchStats = {
+                scssFilesFound: 2,
+                jsFilesWithErrors: 0,
+                scssFilesWithErrors: 1,
+                totalErrors: 0
+            }
+
+            appUtils.updateStats('scssFilesFound');
+            appUtils.updateStats('scssFilesFound');
+            appUtils.updateStats('scssFilesWithErrors');
+            assert.equal(true, isEqual(appUtils.getStats(), matchStats));
+        });
+    });
+
     describe('getFileList()', () => {
+        it('should handle error when folder does not exist', () => {
+            resetRequireCache();
+            const appUtils = require('../bin/utils/appUtils.js');
+            const pathToComponents = __dirname + '/folderDoesNotExist/';
+            const listOfFiles = appUtils.getFileList('components', pathToComponents);
+            assert.equal('Error - Folder not found:', listOfFiles);
+        })
+
         it('should get all components found in a path', () => {
             resetRequireCache();
             const appUtils = require('../bin/utils/appUtils.js');
@@ -242,6 +289,43 @@ describe('appUtils', () => {
             assert.equal(true, appUtils.getConfig().stylesheetsFileList[scssFile1]);
             assert.equal(true, appUtils.getConfig().stylesheetsFileList[scssFile2]);
             assert.equal(undefined, appUtils.getConfig().stylesheetsFileList[scssFile3]);
+        });
+    });
+
+    describe('analyzeCss()', () => {
+        it('should handle error if no file path is provided', () => {
+            resetRequireCache();
+            const appUtils = require('../bin/utils/appUtils.js');
+
+            return appUtils.analyzeCss()
+            .catch((err) => {
+                assert.equal('No path to file provided', err.Error);
+            })
+        });
+
+        it('should silently handle error if file is not found', () => {
+            resetRequireCache();
+            const appUtils = require('../bin/utils/appUtils.js');
+            let pathToFile = '/path/does/not/exist/styelsheet.js';
+
+            return appUtils.analyzeCss(pathToFile)
+            .then((result) => {
+                assert.equal(true, result);
+            })
+        });
+
+        it('should recognize file is in exclusions list', () => {
+            resetRequireCache();
+            const appUtils = require('../bin/utils/appUtils.js');
+            let filePath = 'thisFileIsExcluded.js';
+            let exclusionsFile = __dirname + '/mockData/scss-away.exclude.js';
+
+            appUtils.updateExlusions(exclusionsFile);
+
+            return appUtils.analyzeCss(filePath)
+            .then((result) => {
+                assert.equal(true, result);
+            })
         });
     });
 });

@@ -6,6 +6,7 @@
   "scripts": {
     "babel": "node_modules/.bin/babel-node --presets react,es2015 bin/scss-away.js",
     "start": "./bin/scss-away.js",
+    "istanbul": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha",
     "test": "./node_modules/mocha/bin/mocha",
     "watch": "nodemon --watch bin/ --ext js,jsx,scss --exec 'npm run babel'",
     "watch-test": "nodemon --watch test/ --watch bin/ --ext js --exec 'npm run test'"
@@ -44,6 +45,7 @@
     "sass-thematic": "2.0.4"
   },
   "devDependencies": {
+    "istanbul": "^0.4.5",
     "lodash.isequal": "4.5.0",
     "mocha": "3.2.0"
   }

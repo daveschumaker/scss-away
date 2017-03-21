@@ -15,10 +15,12 @@ let config = {
     componentsFileList: {},     // Store list of components for quick lookups.
     stylesheetsFileList: {},    // Store list of stylesheets for quick lookups.
 
-    scssFilesFound: 0,
-    jsFilesWithErrors: 0,
-    scssFilesWithErrors: 0,
-    totalErrors: 0
+    stats: {
+        scssFilesFound: 0,
+        jsFilesWithErrors: 0,
+        scssFilesWithErrors: 0,
+        totalErrors: 0
+    }
 }
 
 const appUtils = {
@@ -51,12 +53,12 @@ const appUtils = {
         }
     },
     getStats() {
-        return config;
+        return config.stats;
     },
     updateStats(field) {
-        let num = config[field];
-        config[field]++;
-        return config[field];
+        let num = config.stats[field];
+        config.stats[field]++;
+        return config.stats[field];
     },
     updateComponentPath(path) {
         config.pathToComponents = appUtils.validatePath(path);
@@ -92,9 +94,7 @@ const appUtils = {
             files = fs.readdirSync(dir);
         } catch (err) {
             if (err.code === 'ENOENT') {
-                console.log(`Error - Folder not found: ${dir}`.yellow);
-                console.log('Exiting.'.yellow);
-                process.exit(0);
+                return 'Error - Folder not found:';
             } else {
                 console.log('An error occurred:', err);
                 return;
@@ -146,12 +146,8 @@ const appUtils = {
                     throw {
                         Error: 'Error: SCSS file not found.'
                     }
-                } else if (config.exclusions.files.indexOf(pathToScss) > -1) {
-                    throw {
-                        Error: 'Error: File in exclusion list.',
-                        file: pathToScss
-                    }
                 }
+
                 scssPath = pathToScss;
                 return scssUtils.loadCssAndGetData(scssPath, config)
             })

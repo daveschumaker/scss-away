@@ -1,5 +1,7 @@
 {
-    "files": [],
+    "files": [
+        "thisFileIsExcluded.js"
+    ],
     "classes": [
         "myComponentTwo-content"
     ],
