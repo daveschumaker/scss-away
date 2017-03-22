@@ -1,3 +1,4 @@
+process.env.NODE_ENV = 'test';
 let assert = require('assert');
 let htmlUtils = require('../bin/utils/htmlUtils.js');
 

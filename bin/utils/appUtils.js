@@ -3,6 +3,11 @@ const fs = require('fs');
 const htmlUtils = require('./htmlUtils.js');
 const scssUtils = require('./scssUtils.js');
 
+if (process.env.NODE_ENV !== 'test') {
+    // var console = {};
+    // console.log = function(){};
+}
+
 let config = {
     exclusions: {
         ids: [],
@@ -39,7 +44,7 @@ const appUtils = {
             config.exclusions.classes = exclusionObj.classes || [];
             config.exclusions.files = exclusionObj.files || [];
         } catch(e) {
-            // console.log('Exclusion file error...', e);
+            console.log('Exclusion file error...', e);
             return;
         }
 
@@ -168,16 +173,23 @@ const appUtils = {
                     htmlAttribs,
                     scssSelectors,
                     filePath
-                })
+                });
+
+                return;
             }).then(() => {
-                appUtils.displayOutput({
+                let analyzeCssOutput = appUtils.displayOutput({
                     type: 'css',
                     foundNestedRules,
                     missingClasses,
                     missingIds
                 }, scssPath);
 
-                return resolve(true);
+                console.log('\n');
+                analyzeCssOutput.forEach((line) => {
+                    console.log(line);
+                })
+
+                return resolve(analyzeCssOutput);
             }).catch((err = {}) => {
                 if (err.Error === 'Error: SCSS file not found.') {
                     // Probably hide this error since a number of components may not have associated scss files.
@@ -210,13 +222,18 @@ const appUtils = {
             .then((verifyIdsObj) => {
                 missingIds = verifyIdsObj;
 
-                appUtils.displayOutput({
+                let analyzeHtmlOutput = appUtils.displayOutput({
                     type: 'html',
                     missingClasses,
                     missingIds
                 }, contentToAnalyze.filePath);
 
-                return resolve(true);
+                console.log('\n');
+                analyzeHtmlOutput.forEach((line) => {
+                    console.log(line);
+                })
+
+                return resolve(analyzeHtmlOutput);
             })
             .catch((err) => {
                 console.log('Error in analyzeHtml', err);
@@ -284,22 +301,24 @@ const appUtils = {
             });
         })
     },
-    displayOutput(rulesObj, filePath) {
+    displayOutput(rulesObj, filePath = '') {
         let foundNestedRules = rulesObj.type === 'css' ? rulesObj.foundNestedRules : false;
         let noClassesFound = rulesObj.missingClasses.noClassesFound;
         let noIdsFound = rulesObj.missingIds.noIdsFound;
         let missingClasses = rulesObj.missingClasses.classes;
         let missingIds = rulesObj.missingIds.ids;
 
+        let outputArray = []
+
         if ((missingClasses.length === 0 && missingIds.length === 0 && !foundNestedRules) ||
             (missingClasses.length === 0 && noIdsFound && !foundNestedRules)
         ) {
             // For now, hide output for optimized files.
-            // console.log(`\n${filePath}`.yellow);
-            // console.log('[OK] All classes and ids found'.green);
-            return;
+            // outputArray.push(`\n${filePath}`.yellow);
+            // outputArray.push('[OK] All classes and ids found'.green);
+            return outputArray;
         } else {
-            console.log(`\n${filePath}`.yellow);
+            outputArray.push(`${filePath}`.yellow);
         }
 
         if (rulesObj.type === 'css' && (foundNestedRules || missingClasses.length > 0 || missingIds.length > 0)) {
@@ -309,28 +328,30 @@ const appUtils = {
         }
 
         if (rulesObj.type === 'css' && foundNestedRules) {
-            console.log('[Warning] Found nested SCSS.'.yellow);
+            outputArray.push('[Warning] Found nested SCSS.'.yellow);
         }
 
         if (missingClasses.length > 0) {
-            console.log('[Error] Orphan Classes:'.red);
+            outputArray.push('[Error] Orphan Classes:'.red);
             missingClasses.forEach((className) => {
-                console.log(`  .${className}`.red);
+                outputArray.push(`  .${className}`.red);
             });
         } else if (!noClassesFound) {
             // Hide output when no classes were found in the HTML / SCSS file.
-            console.log('[OK] All classes found'.green);
+            outputArray.push('[OK] All classes found'.green);
         }
 
         if (missingIds && missingIds.length > 0) {
-            console.log('Orphan Ids:'.red);
+            outputArray.push('Orphan Ids:'.red);
             missingIds.forEach((missingId) => {
-                console.log(`  #${missingId}`.red);
+                outputArray.push(`  #${missingId}`.red);
             });
         } else if (!noIdsFound) {
             // Hide output when no ids were found in the HTML / SCSS file.
-            console.log('[OK] All ids found'.green);
+            outputArray.push('[OK] All ids found'.green);
         }
+
+        return outputArray;
     }
 };
 
