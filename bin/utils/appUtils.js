@@ -3,11 +3,6 @@ const fs = require('fs');
 const htmlUtils = require('./htmlUtils.js');
 const scssUtils = require('./scssUtils.js');
 
-if (process.env.NODE_ENV !== 'test') {
-    // var console = {};
-    // console.log = function(){};
-}
-
 let config = {
     exclusions: {
         ids: [],
@@ -44,7 +39,7 @@ const appUtils = {
             config.exclusions.classes = exclusionObj.classes || [];
             config.exclusions.files = exclusionObj.files || [];
         } catch(e) {
-            console.log('Exclusion file error...', e);
+            // console.log('Exclusion file error...', e);
             return;
         }
 
@@ -174,9 +169,7 @@ const appUtils = {
                     scssSelectors,
                     filePath
                 });
-
-                return;
-            }).then(() => {
+            }).then((analyzeHtmlOutput) => {
                 let analyzeCssOutput = appUtils.displayOutput({
                     type: 'css',
                     foundNestedRules,
@@ -184,12 +177,17 @@ const appUtils = {
                     missingIds
                 }, scssPath);
 
-                console.log('\n');
-                analyzeCssOutput.forEach((line) => {
-                    console.log(line);
-                })
+                if (process.env.NODE_ENV !== 'test') {
+                    console.log('\n');
+                    analyzeCssOutput.forEach((line) => {
+                        console.log(line);
+                    })
+                }
 
-                return resolve(analyzeCssOutput);
+                return resolve({
+                    analyzeCssOutput,
+                    analyzeHtmlOutput
+                });
             }).catch((err = {}) => {
                 if (err.Error === 'Error: SCSS file not found.') {
                     // Probably hide this error since a number of components may not have associated scss files.
@@ -213,6 +211,7 @@ const appUtils = {
             let scssSelectors = contentToAnalyze.scssSelectors;
             let missingClasses = {};
             let missingIds = {};
+            let htmlOutput = [];
 
             return appUtils.checkClassNamesExist(htmlAttribs, scssSelectors)
             .then((verifyClassesObj) => {
@@ -221,17 +220,18 @@ const appUtils = {
             })
             .then((verifyIdsObj) => {
                 missingIds = verifyIdsObj;
-
                 let analyzeHtmlOutput = appUtils.displayOutput({
                     type: 'html',
                     missingClasses,
                     missingIds
                 }, contentToAnalyze.filePath);
 
-                console.log('\n');
-                analyzeHtmlOutput.forEach((line) => {
-                    console.log(line);
-                })
+                if (process.env.NODE_ENV !== 'test') {
+                    console.log('\n');
+                    analyzeHtmlOutput.forEach((line) => {
+                        console.log(line);
+                    })
+                }
 
                 return resolve(analyzeHtmlOutput);
             })

@@ -1,10 +1,5 @@
 const fs = require('fs');
 
-if (process.env.NODE_ENV !== 'test') {
-    var console = {};
-    console.log = function(){};
-}
-
 const htmlUtils = {
     extractClassNames(input, appConfig) {
         return new Promise((resolve, reject) => {

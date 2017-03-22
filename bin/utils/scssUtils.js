@@ -3,11 +3,6 @@ const fs = require('fs');
 const thematic = require('sass-thematic');
 const util = require('util');
 
-if (process.env.NODE_ENV !== 'test') {
-    var console = {};
-    console.log = function(){};
-}
-
 const scssUtils = {
     getScssFileName(pathToComponent, appConfig) {
         return new Promise((resolve, reject) => {
