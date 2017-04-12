@@ -340,7 +340,7 @@ describe('appUtils', () => {
             appUtils.getFileList('stylesheets', appUtils.getConfig().pathToStylesheets);
 
             const matchCssOutput = [
-                '/Users/dave/projects/scss-away/test/mockData/myComponent.scss'.yellow,
+                `${pathToComponents}myComponent.scss`.yellow,
                 '[Warning] Found nested SCSS.'.yellow,
                 '[Error] Orphan Classes:'.red,
                 '  .selectorHasNestedRules'.red,
@@ -353,7 +353,7 @@ describe('appUtils', () => {
             ]
 
             const matchHtmlOutput =  [
-                '/Users/dave/projects/scss-away/test/mockData/myComponent.js'.yellow,
+                `${pathToComponents}myComponent.js`.yellow,
                 '[Error] Orphan Classes:'.red,
                 '  .anotherClass'.red,
                 '  .title-bar'.red,
@@ -369,7 +369,8 @@ describe('appUtils', () => {
                 assert.equal(true, isEqual(htmlOutput, matchHtmlOutput));
             })
             .catch((err) => {
-                assert.fail();
+                console.log('err', err);
+                assert.fail(err);
             })
         });
 
