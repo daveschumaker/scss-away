@@ -122,6 +122,11 @@ const appUtils = {
 
         return filelist;
     },
+    getFileNameOnly(filePath) {
+        let pathArray = filePath.split('/');
+
+        return pathArray[pathArray.length - 1];
+    },
     analyzeCss(filePath) {
         return new Promise((resolve, reject) => {
             let foundNestedRules = false;
@@ -135,7 +140,7 @@ const appUtils = {
                 return reject({
                     Error: 'No path to file provided'
                 })
-            } else if (config.exclusions.files.indexOf(filePath) > -1) {
+            } else if (config.exclusions.files.indexOf(appUtils.getFileNameOnly(filePath)) > -1) {
                 // Component is in exclusion list. Silently resolve issue.
                 return resolve(true);
             }
@@ -178,7 +183,6 @@ const appUtils = {
                 }, scssPath);
 
                 if (process.env.NODE_ENV !== 'test') {
-                    console.log('\n');
                     analyzeCssOutput.forEach((line) => {
                         console.log(line);
                     })
@@ -227,7 +231,7 @@ const appUtils = {
                 }, contentToAnalyze.filePath);
 
                 if (process.env.NODE_ENV !== 'test') {
-                    console.log('\n');
+                    // console.log('\n');
                     analyzeHtmlOutput.forEach((line) => {
                         console.log(line);
                     })
@@ -318,6 +322,7 @@ const appUtils = {
             // outputArray.push('[OK] All classes and ids found'.green);
             return outputArray;
         } else {
+            console.log('\n');
             outputArray.push(`${filePath}`.yellow);
         }
 
