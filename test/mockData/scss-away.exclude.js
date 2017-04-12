@@ -3,7 +3,8 @@
         "thisFileIsExcluded.js"
     ],
     "classes": [
-        "myComponentTwo-content"
+        "nested-property",
+        "second-nested-property"
     ],
     "ids": [
         "icon"

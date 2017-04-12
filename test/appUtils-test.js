@@ -11,14 +11,14 @@ var resetRequireCache = function() {
     delete require.cache[require.resolve('../bin/utils/appUtils.js')];
 }
 
-describe('appUtils', () => {
+describe.only('appUtils', () => {
     describe('updateExlusions()', () => {
         it('should not find exclusions file if none exists', () => {
             resetRequireCache();
             const appUtils = require('../bin/utils/appUtils.js');
             const foundExclusionsFile = appUtils.updateExlusions();
 
-            assert.equal(undefined, foundExclusionsFile);
+            assert.equal(false, foundExclusionsFile);
         });
 
         it('should find exclusions file if it exists', () => {
@@ -26,9 +26,11 @@ describe('appUtils', () => {
             const appUtils = require('../bin/utils/appUtils.js');
             const linkToExclusionsFile = __dirname + '/mockData/scss-away.exclude.js';
             const foundExclusionsFile = appUtils.updateExlusions(linkToExclusionsFile);
+            const foundFile = foundExclusionsFile !== false;
 
-            assert.equal(1, foundExclusionsFile.classes.length);
-            assert.equal(1, foundExclusionsFile.ids.length);
+            assert.equal(true, foundFile);
+            // assert.equal(1, foundExclusionsFile.ids.length);
+            // assert.equal(2, foundExclusionsFile.classes.length);
         });
     })
 
@@ -374,6 +376,52 @@ describe('appUtils', () => {
             })
         });
 
+        it('should ignore css rules found in exclude file.', () => {
+            resetRequireCache();
+            const appUtils = require('../bin/utils/appUtils.js');
+            const pathToComponents = __dirname + '/mockData/';
+            const exclusionsFile = pathToComponents + 'scss-away.exclude.js';
 
+            appUtils.updateComponentPath(pathToComponents);
+            appUtils.updateStyleSheetPath(pathToComponents);
+            appUtils.updateExlusions(exclusionsFile);
+
+
+            let fileList = appUtils.getFileList('components', appUtils.getConfig().pathToComponents);
+            appUtils.getFileList('stylesheets', appUtils.getConfig().pathToStylesheets);
+
+
+            const matchCssOutput = [
+                `${pathToComponents}myComponent.scss`.yellow,
+                '[Warning] Found nested SCSS.'.yellow,
+                '[Error] Orphan Classes:'.red,
+                '  .selectorHasNestedRules'.red,
+                '  .wutwut'.red,
+                'Orphan Ids:'.red,
+                '  #randomIdDoesNotExistInHtml'.red,
+                '  #nestedRandomIdDoesNotExist'.red
+            ]
+
+            const matchHtmlOutput =  [
+                `${pathToComponents}myComponent.js`.yellow,
+                '[Error] Orphan Classes:'.red,
+                '  .anotherClass'.red,
+                '  .title-bar'.red,
+                '[OK] All ids found'.green
+            ];
+
+            return appUtils.analyzeCss(fileList[0])
+            .then((result) => {
+                let cssOutput = result.analyzeCssOutput;
+                let htmlOutput = result.analyzeHtmlOutput;
+
+                assert.equal(true, isEqual(cssOutput, matchCssOutput));
+                assert.equal(true, isEqual(htmlOutput, matchHtmlOutput));
+            })
+            .catch((err) => {
+                console.log('err', err);
+                assert.fail(err);
+            })
+        });
     });
 });

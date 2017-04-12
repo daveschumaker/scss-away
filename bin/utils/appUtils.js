@@ -40,7 +40,7 @@ const appUtils = {
             config.exclusions.files = exclusionObj.files || [];
         } catch(e) {
             // console.log('Exclusion file error...', e);
-            return;
+            return false;
         }
 
         return config.exclusions;
