@@ -165,6 +165,8 @@ Contributions are much appreciated!
 
 ## Changelog
 
+* v0.3.3
+    * Bump node-sass version due to issue with running on Linux machines.
 * v0.3.2
     * Update tests to cover more use cases.
 * v0.3.0
